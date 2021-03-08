@@ -1,5 +1,6 @@
 #include "Rigidbody.h"
 #include "Transform.h"
+#include "EntityManager.h"
 using namespace DirectX;
 // constructor & big 3
 /*
@@ -356,7 +357,7 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 
 	// if it touches or is below ground, set to on ground
 	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS
-	if (pos.y <= 0)
+	if (IsColliding(EntityManager::GetInstance()->GetRigidBodies()[1]))
 	{
 		pos.y = 0.0f;
 		vel.y = 0.0f;
