@@ -1,2 +1,2 @@
 # RacingEngine
-DX11 Engine Made to Support a Racing Game
+Custom DX11 Engine to support a basic racing game
