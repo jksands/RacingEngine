@@ -43,7 +43,6 @@ void Camera::Update(float dt, HWND windowHandle)
 	if (GetAsyncKeyState('D') & 0x8000) { transform.MoveRelative(movementSpeed * dt * moveSpeed, 0, 0); }
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000) { transform.MoveAbsolute(0, movementSpeed * dt * moveSpeed, 0); }
 	if (GetAsyncKeyState('X') & 0x8000) { transform.MoveAbsolute(0, -movementSpeed * dt * moveSpeed, 0); }
-
 	POINT mousePos = {};
 	GetCursorPos(&mousePos);
 	ScreenToClient(windowHandle, &mousePos);

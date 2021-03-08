@@ -138,3 +138,8 @@ bool Entity::IsPhysicsObject()
 {
 	return phyicsObject;
 }
+
+Rigidbody* Entity::GetRigidBody()
+{
+	return rb;
+}

@@ -10,6 +10,7 @@
 #include "Mesh.h"
 #include "Entity.h"
 #include "Camera.h"
+#include "EntityManager.h"
 #include "Lights.h"
 
 class Game 

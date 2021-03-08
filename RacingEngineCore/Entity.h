@@ -18,6 +18,7 @@ public:
 	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char c = ' ');
 	void DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps);
 	bool IsPhysicsObject();
+	Rigidbody* GetRigidBody();
 
 private:
 	Transform transform;

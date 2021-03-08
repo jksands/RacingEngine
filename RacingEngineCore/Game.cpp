@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Vertex.h"
+#include "EntityManager.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -219,11 +220,10 @@ void Game::LoadMeshes()
 // Creates entities.  Can choose any mesh and any material, and position anywhere
 void Game::CreateEntities()
 {
-	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));
-	// Car
-	entities.push_back(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, 5, 0), XMFLOAT3(.05f,.05f,.05f)), true));
+	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));E
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, 5, 0), XMFLOAT3(.05f,.05f,.05f)), true));
 	// floor
-	entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(0, -5, 0), XMFLOAT3(20.0f, 2.0f, 50.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(0, -5, 0), XMFLOAT3(20.0f, 2.0f, 50.0f)), true, false));
 
 	skyboxEntity = new Entity(meshes[2], materials[0]);
 }
@@ -387,6 +387,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	pixelShader->CopyAllBufferData();
 	normalMapPS->CopyAllBufferData();
 	
+	entities = EntityManager::GetInstance()->GetEntities();
 	// Draw all entities
 	for (int i = 0; i < entities.size(); i++)
 	{
