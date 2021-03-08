@@ -10,9 +10,10 @@
 class Entity
 {
 public:
-	Entity(Mesh* m, Material* mat, Transform t = Transform(), bool physicsObject = false);
+	Entity(Mesh* m, Material* mat, Transform t = Transform(), bool physicsObject = false, bool _isDynamic = true);
 	Mesh* GetMesh();
 	Transform* GetTransform();
+	void Update(float deltaTime, float totalTime);
 	// For time being, Entities handle their own Draw.  May be updated in the future with an addition of a renderer
 	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char c = ' ');
 	void DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps);
@@ -24,5 +25,6 @@ private:
 	Material* material = nullptr;
 	Rigidbody* rb;
 	bool phyicsObject;
+	bool isDynamic;
 };
 

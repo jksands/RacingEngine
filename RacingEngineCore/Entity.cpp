@@ -1,7 +1,7 @@
 #include "Entity.h"
 #include "BufferStructs.h"
 using namespace DirectX;
-Entity::Entity(Mesh* m, Material* mat, Transform t, bool physics)
+Entity::Entity(Mesh* m, Material* mat, Transform t, bool physics, bool _isDynamic)
 {
 	mesh = m;
 	material = mat;
@@ -10,7 +10,9 @@ Entity::Entity(Mesh* m, Material* mat, Transform t, bool physics)
 	if (phyicsObject)
 	{
 		// Instantiate as Physics Object
-		rb = new Rigidbody(mesh->GetVertices(), transform);
+		rb = new Rigidbody(mesh->GetVertices(), transform, _isDynamic);
+		isDynamic = _isDynamic;
+
 	}
 }
 
@@ -22,6 +24,18 @@ Mesh* Entity::GetMesh()
 Transform* Entity::GetTransform()
 {
 	return &transform;
+}
+
+void Entity::Update(float deltaTime, float totalTime)
+{
+	if (phyicsObject && isDynamic)
+	{
+		rb->Update(deltaTime, totalTime);
+		// ADD OVERLOAD TO TRANSFORM: AddOffset
+		XMFLOAT3 tPos = rb->GetParentalOffset();
+		XMFLOAT3 cPos = rb->GetCenterGlobal();
+		transform.SetPosition(cPos.x + tPos.x, cPos.y+ tPos.y, cPos.z + tPos.z);
+	}
 }
 
 void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char type)
@@ -76,6 +90,7 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, 
 
 }
 
+
 void Entity::DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, 
 	SimpleVertexShader* vs, SimplePixelShader* ps)
 {
@@ -86,10 +101,11 @@ void Entity::DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camer
 
 	Transform temp = transform;
 	XMFLOAT3 hw = rb->GetHalfWidth();
-	float f = transform.GetScale().x * 2;
-	temp.SetScale(hw.x * f, hw.y * f, hw.z * f);
+	XMFLOAT3 s = transform.GetScale();
+	temp.SetScale(hw.x * s.x * 2, hw.y * s.y * 2, hw.z * s.z * 2);
 	XMFLOAT3 pos = rb->GetCenterGlobal();
 	temp.SetPosition(pos.x, pos.y, pos.z);
+
 	vs->SetFloat4("tint", material->GetTint());
 	vs->SetMatrix4x4("world", temp.GetWorldMatrix());
 	vs->SetMatrix4x4("view", cam->GetViewMatrix());

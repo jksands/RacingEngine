@@ -35,12 +35,14 @@ void Camera::UpdateViewMatrix()
 // Will likely move controls to a GameLoop Update
 void Camera::Update(float dt, HWND windowHandle)
 {
-	if (GetAsyncKeyState('W') & 0x8000) { transform.MoveRelative(0, 0, movementSpeed * dt); }
-	if (GetAsyncKeyState('S') & 0x8000) { transform.MoveRelative(0, 0, -movementSpeed * dt); }
-	if (GetAsyncKeyState('A') & 0x8000) { transform.MoveRelative(-movementSpeed * dt, 0, 0); }
-	if (GetAsyncKeyState('D') & 0x8000) { transform.MoveRelative(movementSpeed * dt, 0, 0); }
-	if (GetAsyncKeyState(VK_SPACE) & 0x8000) { transform.MoveAbsolute(0, movementSpeed * dt, 0); }
-	if (GetAsyncKeyState('X') & 0x8000) { transform.MoveAbsolute(0, -movementSpeed * dt, 0); }
+	float moveSpeed = 1.0f;
+	if (GetAsyncKeyState(VK_LSHIFT) & 0x8000) moveSpeed = 4.0f;
+	if (GetAsyncKeyState('W') & 0x8000) { transform.MoveRelative(0, 0, movementSpeed * dt * moveSpeed); }
+	if (GetAsyncKeyState('S') & 0x8000) { transform.MoveRelative(0, 0, -movementSpeed * dt * moveSpeed); }
+	if (GetAsyncKeyState('A') & 0x8000) { transform.MoveRelative(-movementSpeed * dt * moveSpeed, 0, 0); }
+	if (GetAsyncKeyState('D') & 0x8000) { transform.MoveRelative(movementSpeed * dt * moveSpeed, 0, 0); }
+	if (GetAsyncKeyState(VK_SPACE) & 0x8000) { transform.MoveAbsolute(0, movementSpeed * dt * moveSpeed, 0); }
+	if (GetAsyncKeyState('X') & 0x8000) { transform.MoveAbsolute(0, -movementSpeed * dt * moveSpeed, 0); }
 
 	POINT mousePos = {};
 	GetCursorPos(&mousePos);

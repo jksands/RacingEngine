@@ -47,6 +47,11 @@ protected:
 
 	// gravity
 	float grav = 0.035f;
+	// Is it dynamic?
+	bool isDynamic;
+
+	// Represent the offset from our rigidbody's global center to our parent's global center
+	DirectX::XMFLOAT3 offset;
 
 	// public methods
 public:
@@ -56,7 +61,7 @@ public:
 	*	std::vector<DirectX::XMFLOAT3> pointList: the points to make the rigidbody out of
 	* Returns: an instance of the class
 	*/
-	Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform);
+	Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, bool _isDynamic = true);
 	/*
 	* Copy Constructor
 	* Params:
@@ -71,6 +76,8 @@ public:
 	* Returns: an instance of the class
 	*/
 	Rigidbody& operator=(Rigidbody& incoming);
+
+
 	/*
 * Destructor
 * Params: N/A
@@ -132,7 +139,7 @@ public:
 	* ARGUMENTS: NONE
 	* OUTPUT: NONE
 	*/
-	void Update();
+	void Update(float deltaTime, float totalTime);
 	/*
 	* adds the two DirectX::XMFLOAT3 components and return an DirectX::XMFLOAT3
 	* Arguments:
@@ -226,5 +233,7 @@ public:
 	// mass getter and setter
 	void SetMass(float incomingMass);
 	float GetMass();
+
+	DirectX::XMFLOAT3 GetParentalOffset();
 #pragma endregion
 };

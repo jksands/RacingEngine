@@ -8,7 +8,7 @@ using namespace DirectX;
 		*	std::vector<XMFLOAT3> pointList: the points to make the rigidbody out of
 		* Returns: an instance of the class
 		*/
-Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
+Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, bool _isDynamic)
 {
 	// if there are no vertices, return out
 	int vertexCount = vertices.size();
@@ -45,7 +45,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
 		{
 			maxLocal.z = vertices[i].Position.z;
 		}
-		else if (vertices[i].Position.x < minLocal.z)
+		else if (vertices[i].Position.z < minLocal.z)
 		{
 			minLocal.z = vertices[i].Position.z;
 		}
@@ -61,6 +61,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
 	radius = MagFloat3(SubFloat3(maxLocal, centerLocal));
 	rotQuat = XMQuaternionIdentity();
 	ARBBVisible = true;
+	vel = XMFLOAT3(0, 0, 0);
 	myTransform = incomingTransform;
 	localToGlobalMat = myTransform.GetWorldMatrix();
 
@@ -69,6 +70,10 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
 	XMVECTOR pos = XMLoadFloat3(&centerLocal);
 
 	XMStoreFloat3(&centerGlobal, XMVector3Transform(pos, mat));
+	// After calculating center global, get the offset between US and the parent center
+	offset = SubFloat3(myTransform.GetPosition(), centerGlobal);
+
+	isDynamic = _isDynamic;
 }
 
 
@@ -105,6 +110,7 @@ Rigidbody::Rigidbody(Rigidbody const& incoming)
 	mass = incoming.mass;
 	myTransform = incoming.myTransform;
 }
+
 
 /*
 		* Copy Assignment Operator
@@ -201,6 +207,11 @@ XMFLOAT3 Rigidbody::GetVelocity() { return vel; }
 // mass getter and setter
 void Rigidbody::SetMass(float incomingMass) { mass = incomingMass; }
 float Rigidbody::GetMass() { return mass; }
+
+DirectX::XMFLOAT3 Rigidbody::GetParentalOffset()
+{
+	return offset;
+}
 
 // other methods
 		/*
@@ -315,7 +326,7 @@ bool Rigidbody::ARBBCheck(Rigidbody* incoming)
 	return false;
 }
 
-void  Rigidbody::Update()
+void  Rigidbody::Update(float deltaTime, float totalTime)
 {
 	// apply gravity
 	ApplyForce(XMFLOAT3(0.0f, -grav, 0.0f));
@@ -334,6 +345,14 @@ void  Rigidbody::Update()
 
 	// add vel to pos
 	pos = AddFloat3(pos, vel);
+	// myTransform.MoveRelative(pos.x, pos.y, pos.z);
+	centerLocal = pos;
+
+	// calculate center global
+	XMMATRIX mat = XMLoadFloat4x4(&localToGlobalMat);
+	XMVECTOR p = XMLoadFloat3(&centerLocal);
+
+	XMStoreFloat3(&centerGlobal, XMVector3Transform(p, mat));
 
 	// if it touches or is below ground, set to on ground
 	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS

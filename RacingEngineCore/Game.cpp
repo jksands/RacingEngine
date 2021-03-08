@@ -219,11 +219,11 @@ void Game::LoadMeshes()
 // Creates entities.  Can choose any mesh and any material, and position anywhere
 void Game::CreateEntities()
 {
-	entities.push_back(new Entity(meshes[0], materials[1], Transform(XMFLOAT3(0, 1, 0))));
-	entities.push_back(new Entity(meshes[1], materials[2], Transform(XMFLOAT3(1, 0, 0))));
 	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));
 	// Car
-	entities.push_back(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, -2, 0), XMFLOAT3(.05f,.05f,.05f)), true));
+	entities.push_back(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, 5, 0), XMFLOAT3(.05f,.05f,.05f)), true));
+	// floor
+	entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(0, -5, 0), XMFLOAT3(20.0f, 2.0f, 50.0f)), true, false));
 
 	skyboxEntity = new Entity(meshes[2], materials[0]);
 }
@@ -341,6 +341,10 @@ void Game::OnResize()
 void Game::Update(float deltaTime, float totalTime)
 {
 	cam->Update(deltaTime, this->hWnd);
+	for (int i = 0; i < entities.size(); i++)
+	{
+		entities[i]->Update(deltaTime, totalTime);
+	}
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
