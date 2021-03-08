@@ -46,7 +46,7 @@ protected:
 	float mass = 1.0f;
 
 	// gravity
-	float grav = 0.035f;
+	float grav = 0.011f;
 	// Is it dynamic?
 	bool isDynamic;
 
