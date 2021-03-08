@@ -1,6 +1,7 @@
 #pragma once
 #include "Vertex.h"
 #include "Transform.h"
+#include <vector>
 namespace DirectX {
 	class Rigidbody
 	{
@@ -43,6 +44,10 @@ namespace DirectX {
 		XMFLOAT3 size = XMFLOAT3(1.0f, 1.0f, 1.0f);
 		XMFLOAT3 vel = XMFLOAT3(1.0f, 1.0f, 1.0f);
 		float mass = 1.0f;
+
+		// gravity
+		float grav = 0.035f;
+
 		// public methods
 	public:
 		/*
@@ -51,7 +56,7 @@ namespace DirectX {
 		*	std::vector<XMFLOAT3> pointList: the points to make the rigidbody out of
 		* Returns: an instance of the class
 		*/
-		Rigidbody(Vertex vertices[], Transform incomingTransform);
+		Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform);
 		/*
 		* Copy Constructor
 		* Params:

@@ -8,10 +8,10 @@ using namespace DirectX;
 		*	std::vector<XMFLOAT3> pointList: the points to make the rigidbody out of
 		* Returns: an instance of the class
 		*/
-Rigidbody::Rigidbody(Vertex vertices[], Transform incomingTransform)
+Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
 {
 	// if there are no vertices, return out
-	int vertexCount = sizeof(vertices) / sizeof(vertices[0]);
+	int vertexCount = vertices.size();
 	if (vertexCount == 0)
 	{
 		return;
@@ -248,6 +248,36 @@ bool Rigidbody::IsColliding(Rigidbody* incoming)
 	}
 	return isColliding;
 }
+
+// applies friction by multiplying vel by a number less than 1
+void DirectX::Rigidbody::ApplyFriction(float incomingFrictionCoefficient = 0.05f)
+{
+	// makes sure it's not too low
+	if (incomingFrictionCoefficient < 0.01f)
+	{
+		incomingFrictionCoefficient = 0.01f;
+	}
+
+	vel = MultFloat3(vel, 1.0f - incomingFrictionCoefficient);
+
+	if (MagFloat3(vel) < 0.01f)
+	{
+		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	}
+}
+
+// applies a force to the object
+void DirectX::Rigidbody::ApplyForce(XMFLOAT3 incomingForce)
+{
+	if (mass < 0.01f)
+	{
+		mass = 0.01f;
+	}
+
+	//f = m*a -> a = f/m
+	accel = AddFloat3(accel, DivFloat3(incomingForce, mass));
+}
+
 /*
 * Uses ARBB collision detections to return if this is colliding with another giidbody
 * params: incoing rigidbody
@@ -277,6 +307,36 @@ bool Rigidbody::ARBBCheck(Rigidbody* incoming)
 	// if those fail, then no collide
 	return false;
 }
+
+void DirectX::Rigidbody::Update()
+{
+	// apply gravity
+	ApplyForce(XMFLOAT3(0.0f, -grav, 0.0f));
+
+	// add accel to vel
+	vel = AddFloat3(vel, accel);
+
+	// apply friction
+	ApplyFriction();
+
+	// if vel is tiny, set to 0
+	if (MagFloat3(vel) < 0.01f)
+	{
+		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	}
+
+	// add vel to pos
+	pos = AddFloat3(pos, vel);
+
+	// if it touches or is below ground, set to on ground
+	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS
+	if (pos.y <= 0)
+	{
+		pos.y = 0.0f;
+		vel.y = 0.0f;
+	}
+}
+
 // helpers
 // Adding to XMFLOAT3's
 XMFLOAT3 Rigidbody::AddFloat3(XMFLOAT3 a, XMFLOAT3 b)
