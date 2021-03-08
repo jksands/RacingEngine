@@ -65,6 +65,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
 	localToGlobalMat = myTransform.GetWorldMatrix();
 }
 
+
 /*
 		* Copy Constructor
 		* Params:
@@ -250,7 +251,7 @@ bool Rigidbody::IsColliding(Rigidbody* incoming)
 }
 
 // applies friction by multiplying vel by a number less than 1
-void DirectX::Rigidbody::ApplyFriction(float incomingFrictionCoefficient = 0.05f)
+void  Rigidbody::ApplyFriction(float incomingFrictionCoefficient)
 {
 	// makes sure it's not too low
 	if (incomingFrictionCoefficient < 0.01f)
@@ -267,7 +268,7 @@ void DirectX::Rigidbody::ApplyFriction(float incomingFrictionCoefficient = 0.05f
 }
 
 // applies a force to the object
-void DirectX::Rigidbody::ApplyForce(XMFLOAT3 incomingForce)
+void  Rigidbody::ApplyForce(XMFLOAT3 incomingForce)
 {
 	if (mass < 0.01f)
 	{
@@ -308,7 +309,7 @@ bool Rigidbody::ARBBCheck(Rigidbody* incoming)
 	return false;
 }
 
-void DirectX::Rigidbody::Update()
+void  Rigidbody::Update()
 {
 	// apply gravity
 	ApplyForce(XMFLOAT3(0.0f, -grav, 0.0f));

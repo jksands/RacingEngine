@@ -20,6 +20,6 @@ private:
 	Transform transform;
 	Mesh* mesh = nullptr;
 	Material* material = nullptr;
-	Rigidbody* rb = nullptr;
+	Rigidbody* rb;
 };
 

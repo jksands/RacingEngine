@@ -215,7 +215,8 @@ void Game::CreateEntities()
 	entities.push_back(new Entity(meshes[0], materials[1], Transform(XMFLOAT3(0, 1, 0))));
 	entities.push_back(new Entity(meshes[1], materials[2], Transform(XMFLOAT3(1, 0, 0))));
 	entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));
-	entities.push_back(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, -2, 0), XMFLOAT3(.05f,.05f,.05f))));
+	// Car
+	entities.push_back(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, -2, 0), XMFLOAT3(.05f,.05f,.05f)), true));
 
 	skyboxEntity = new Entity(meshes[2], materials[0]);
 }

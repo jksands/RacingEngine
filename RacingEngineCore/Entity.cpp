@@ -9,7 +9,7 @@ Entity::Entity(Mesh* m, Material* mat, Transform t, bool physics)
 	if (physics)
 	{
 		// Instantiate as Physics Object
-		// rb = new Rigidbody(mesh->GetVertices(), transform);
+		rb = new Rigidbody(mesh->GetVertices(), transform);
 	}
 }
 
