@@ -10,6 +10,18 @@ EntityManager* EntityManager::GetInstance()
     return instance;
 }
 
+EntityManager::~EntityManager()
+{
+    for (auto rb : rigidbodies)
+    {
+        delete rb;
+    }
+    for (auto e : entities)
+    {
+        delete e;
+    }
+}
+
 /// <summary>
 /// Adds entitites to entity list
 /// Adds rigidbody to rigidbody list if is physics object

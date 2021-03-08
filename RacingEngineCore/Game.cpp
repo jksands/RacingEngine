@@ -48,11 +48,6 @@ Game::~Game()
 	{
 		delete m;
 	}
-	// Delete entities
-	for (auto e : entities)
-	{
-		delete  e;
-	}
 	// Delete materials
 	for (auto mat : materials)
 	{
@@ -70,6 +65,8 @@ Game::~Game()
 	delete skyVS;
 	delete skyPS;
 	delete skyboxEntity;
+	delete colorPS;
+	delete EntityManager::GetInstance();
 }
 
 // --------------------------------------------------------

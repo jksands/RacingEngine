@@ -15,6 +15,7 @@ public:
 	/// </summary>
 	/// <returns>The singleton instance</returns>
 	static EntityManager* GetInstance();
+	~EntityManager();
 	void AddEntity(Entity* e);
 	std::vector<Entity*> GetEntities();
 	std::vector<Rigidbody*> GetRigidBodies();
