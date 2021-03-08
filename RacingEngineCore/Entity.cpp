@@ -1,11 +1,16 @@
 #include "Entity.h"
 #include "BufferStructs.h"
 using namespace DirectX;
-Entity::Entity(Mesh* m, Material* mat, Transform t)
+Entity::Entity(Mesh* m, Material* mat, Transform t, bool physics)
 {
 	mesh = m;
 	material = mat;
 	transform = t;
+	if (physics)
+	{
+		// Instantiate as Physics Object
+		// rb = new Rigidbody(mesh->GetVertices(), transform);
+	}
 }
 
 Mesh* Entity::GetMesh()

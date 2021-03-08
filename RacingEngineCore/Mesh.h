@@ -1,6 +1,7 @@
 #pragma once
 #include <d3d11.h>
 #include <wrl/client.h>
+#include <vector>
 #include "Vertex.h"
 /// <summary>
 /// Class to hold Mesh data and vertex and index buffers for each.
@@ -18,11 +19,13 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer();
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetIndexBuffer();
 	int GetIndexCount();
+	std::vector<Vertex> GetVertices();
 
 private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 	int indices = 0;
 	// Might need to keep the vertices used around as well to construct a bounding box out of them
+	std::vector<Vertex> verts;
 };
 
