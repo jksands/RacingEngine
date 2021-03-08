@@ -15,11 +15,14 @@ public:
 	Transform* GetTransform();
 	// For time being, Entities handle their own Draw.  May be updated in the future with an addition of a renderer
 	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char c = ' ');
+	void DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps);
+	bool IsPhysicsObject();
 
 private:
 	Transform transform;
 	Mesh* mesh = nullptr;
 	Material* material = nullptr;
 	Rigidbody* rb;
+	bool phyicsObject;
 };
 

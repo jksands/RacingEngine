@@ -123,6 +123,7 @@ void Transform::MoveRelative(float x, float y, float z)
 	XMVECTOR temp = XMLoadFloat3(&position);
 	XMStoreFloat3(&position, temp + dir);
 	matrixDirty = true;
+
 }
 
 void Transform::Rotate(float pitch, float yaw, float roll)

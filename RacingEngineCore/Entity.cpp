@@ -6,7 +6,8 @@ Entity::Entity(Mesh* m, Material* mat, Transform t, bool physics)
 	mesh = m;
 	material = mat;
 	transform = t;
-	if (physics)
+	phyicsObject = physics;
+	if (phyicsObject)
 	{
 		// Instantiate as Physics Object
 		rb = new Rigidbody(mesh->GetVertices(), transform);
@@ -72,4 +73,52 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, 
 		mesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
 		0,     // Offset to the first index we want to use
 		0);    // Offset to add to each index when looking up vertices
+
+}
+
+void Entity::DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, 
+	SimpleVertexShader* vs, SimplePixelShader* ps)
+{
+	// Set shaders in Entity Draw -> INEFFICIENT, WILL IMPLEMENT RENDER ORDER IN FUTURE!
+	vs->SetShader();
+	ps->SetShader();
+
+
+	Transform temp = transform;
+	XMFLOAT3 hw = rb->GetHalfWidth();
+	float f = transform.GetScale().x * 2;
+	temp.SetScale(hw.x * f, hw.y * f, hw.z * f);
+	XMFLOAT3 pos = rb->GetCenterGlobal();
+	temp.SetPosition(pos.x, pos.y, pos.z);
+	vs->SetFloat4("tint", material->GetTint());
+	vs->SetMatrix4x4("world", temp.GetWorldMatrix());
+	vs->SetMatrix4x4("view", cam->GetViewMatrix());
+	vs->SetMatrix4x4("proj", cam->GetProjectionMatrix());
+
+	ps->SetFloat3("camPos", cam->GetTransform().GetPosition());
+	ps->SetFloat("spec", material->GetSpecIntensity());
+	ps->SetSamplerState("samplerOptions", material->GetSampler());
+	ps->SetShaderResourceView("diffuseTexture", material->GetSRV());
+
+
+	// Copy buffer data
+	vs->CopyAllBufferData();
+	ps->CopyAllBufferData();
+
+	// Set buffers before drawing
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	ctx->IASetVertexBuffers(0, 1, colliderMesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
+	ctx->IASetIndexBuffer(colliderMesh->GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	// Actual Draw call
+	ctx->DrawIndexed(
+		colliderMesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
+		0,     // Offset to the first index we want to use
+		0);    // Offset to add to each index when looking up vertices
+}
+
+bool Entity::IsPhysicsObject()
+{
+	return phyicsObject;
 }

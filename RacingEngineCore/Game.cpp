@@ -84,6 +84,10 @@ void Game::Init()
 	rastDesc.DepthClipEnable = true;
 	device->CreateRasterizerState(&rastDesc, skyRasterState.GetAddressOf());
 
+	rastDesc.FillMode = D3D11_FILL_WIREFRAME;
+	rastDesc.CullMode = D3D11_CULL_NONE;
+	device->CreateRasterizerState(&rastDesc, lineRasterState.GetAddressOf());
+
 	// Depth state for accepting pixels with depth EQUAL to existing depth
 	D3D11_DEPTH_STENCIL_DESC ds = {};
 	ds.DepthEnable = true;
@@ -151,6 +155,9 @@ void Game::LoadShaders()
 
 	skyPS = new SimplePixelShader(device, context);
 	skyPS->LoadShaderFile(L"SkyPS.cso");
+
+	colorPS = new SimplePixelShader(device, context);
+	colorPS->LoadShaderFile(L"ColorPS.cso");
 }
 
 void Game::LoadTextures()
@@ -214,7 +221,7 @@ void Game::CreateEntities()
 {
 	entities.push_back(new Entity(meshes[0], materials[1], Transform(XMFLOAT3(0, 1, 0))));
 	entities.push_back(new Entity(meshes[1], materials[2], Transform(XMFLOAT3(1, 0, 0))));
-	entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));
+	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));
 	// Car
 	entities.push_back(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, -2, 0), XMFLOAT3(.05f,.05f,.05f)), true));
 
@@ -381,6 +388,25 @@ void Game::Draw(float deltaTime, float totalTime)
 	{
 		entities[i]->Draw(context, cam);
 	}
+
+	// Set draw type to be LINE in some way
+
+
+	context->RSSetState(lineRasterState.Get());
+	// for each entity
+	for (int i = 0; i < entities.size(); i++)
+	{
+		if (entities[i]->IsPhysicsObject())
+		{
+			// Draw cube collider by default.  Will add ability
+			// To draw different types of colliders based on
+			// data passed in
+			entities[i]->DrawCollider(context, cam, meshes[2], vertexShader, colorPS);
+
+		}
+	}
+
+
 	context->RSSetState(skyRasterState.Get());
 	context->OMSetDepthStencilState(skyDepthState, 0);
 	// DRAW SKYBOX

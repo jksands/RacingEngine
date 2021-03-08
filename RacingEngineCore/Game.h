@@ -56,6 +56,8 @@ private:
 
 	// Sky raster state
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> skyRasterState;
+	// Line raster state
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> lineRasterState;
 
 	// Depth Stencil State
 	ID3D11DepthStencilState* skyDepthState;
@@ -75,6 +77,7 @@ private:
 	SimpleVertexShader* skyVS;
 	SimplePixelShader* skyPS;
 
+	SimplePixelShader* colorPS; 
 
 	// Keeps track of the old mouse position.  Useful for 
 	// determining how far the mouse moved in a single frame.

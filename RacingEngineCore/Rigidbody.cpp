@@ -25,7 +25,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
 		// x value
 		if (vertices[i].Position.x > maxLocal.x)
 		{
-			maxLocal.x = vertices[0].Position.x;
+			maxLocal.x = vertices[i].Position.x;
 		}
 		else if (vertices[i].Position.x < minLocal.x)
 		{
@@ -34,7 +34,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
 		// y value
 		if (vertices[i].Position.y > maxLocal.y)
 		{
-			maxLocal.y = vertices[0].Position.y;
+			maxLocal.y = vertices[i].Position.y;
 		}
 		else if (vertices[i].Position.y < minLocal.y)
 		{
@@ -43,7 +43,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
 		// z value
 		if (vertices[i].Position.z > maxLocal.z)
 		{
-			maxLocal.z = vertices[0].Position.z;
+			maxLocal.z = vertices[i].Position.z;
 		}
 		else if (vertices[i].Position.x < minLocal.z)
 		{
@@ -63,6 +63,12 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform)
 	ARBBVisible = true;
 	myTransform = incomingTransform;
 	localToGlobalMat = myTransform.GetWorldMatrix();
+
+	// calculate center global
+	XMMATRIX mat = XMLoadFloat4x4(&localToGlobalMat);
+	XMVECTOR pos = XMLoadFloat3(&centerLocal);
+
+	XMStoreFloat3(&centerGlobal, XMVector3Transform(pos, mat));
 }
 
 
