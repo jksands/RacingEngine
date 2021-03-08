@@ -20,6 +20,11 @@ Mesh::Mesh(Vertex vertices[],
 {
 	CalculateTangents(vertices, vertexAmt, _indices, indexAmt);
     CreateBuffer(vertices, vertexAmt, _indices, indexAmt, device);
+	// Keep verts around for bounding box generation
+	for (int i = 0; i < vertexAmt; i++)
+	{
+		verts.push_back(vertices[i]);
+	}
 }
 
 Mesh::Mesh(const char* objFile, ID3D11Device* device)
@@ -204,6 +209,8 @@ Mesh::Mesh(const char* objFile, ID3D11Device* device)
 	// CalculateTangents(&verts[0], verts.size(), &indices[0], indices.size());
 	CalculateTangents(&verts[0], verts.size(), &indices[0], indices.size());
 	CreateBuffer(&verts[0], verts.size(), &indices[0], (int)indices.size(), device);
+	// Keep verts around for bounding box generation
+	this->verts = verts;
 }
 
 // Creates buffers with information passed from the constructor
@@ -349,4 +356,9 @@ Microsoft::WRL::ComPtr<ID3D11Buffer> Mesh::GetIndexBuffer()
 int Mesh::GetIndexCount()
 {
     return indices;
+}
+
+std::vector<Vertex> Mesh::GetVertices()
+{
+	return verts;
 }

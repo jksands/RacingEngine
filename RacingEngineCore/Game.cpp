@@ -66,6 +66,9 @@ Game::~Game()
 	delete pixelShader;
 	delete normalMapVS;
 	delete normalMapPS;
+	delete skyVS;
+	delete skyPS;
+	delete skyboxEntity;
 }
 
 // --------------------------------------------------------
