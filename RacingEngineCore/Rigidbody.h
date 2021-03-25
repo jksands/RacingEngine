@@ -53,6 +53,9 @@ protected:
 	// Represent the offset from our rigidbody's global center to our parent's global center
 	DirectX::XMFLOAT3 offset;
 
+	// this... thing?
+	const float EPSILON = 1.401298E-45;
+
 	// public methods
 public:
 	/*
@@ -176,6 +179,7 @@ public:
 	* Returns: magnitude of DirectX::XMFLOAT3
 	*/
 	float MagFloat3(DirectX::XMFLOAT3 float3);
+
 	/*
 	* Uses ARBB collision detections to return if this is colliding with another giidbody
 	* params: incoing rigidbody
