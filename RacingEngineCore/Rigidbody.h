@@ -14,6 +14,9 @@ protected:
 	bool OBBVisible = false;
 	bool ARBBVisible = true;
 	float radius = 0.0f;
+
+	bool isGrounded = false;
+
 	// colour of the bounding boxes when they're drawn
 	DirectX::XMFLOAT3 collidingColour = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
 	DirectX::XMFLOAT3 notCollidingColour = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);

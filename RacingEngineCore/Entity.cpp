@@ -101,8 +101,8 @@ void Entity::DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camer
 
 	Transform temp = transform;
 	XMFLOAT3 hw = rb->GetHalfWidth();
-	XMFLOAT3 s = transform.GetScale();
-	temp.SetScale(hw.x * s.x * 2, hw.y * s.y * 2, hw.z * s.z * 2);
+	// XMFLOAT3 s = transform.GetScale();
+	temp.SetScale(hw.x * 2, hw.y * 2, hw.z * 2);
 	XMFLOAT3 pos = rb->GetCenterGlobal();
 	temp.SetPosition(pos.x, pos.y, pos.z);
 
