@@ -111,9 +111,9 @@ void Transform::MoveAbsolute(float x, float y, float z)
 /// <summary>
 /// Moves along RELATIVE axes (our own)
 /// </summary>
-/// <param name="x"></param>
-/// <param name="y"></param>
-/// <param name="z"></param>
+/// <param name="x">x to move by</param>
+/// <param name="y">y to move by</param>
+/// <param name="z">z to move by</param>
 void Transform::MoveRelative(float x, float y, float z)
 {
 	XMVECTOR relPos = XMVectorSet(x, y, z, 0);

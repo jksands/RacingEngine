@@ -3,12 +3,14 @@
 #include "EntityManager.h"
 using namespace DirectX;
 // constructor & big 3
+
+#pragma region Big3
 /*
-		* Constructor
-		* Params:
-		*	std::vector<XMFLOAT3> pointList: the points to make the rigidbody out of
-		* Returns: an instance of the class
-		*/
+* Constructor
+* Params:
+*	std::vector<XMFLOAT3> pointList: the points to make the rigidbody out of
+* Returns: an instance of the class
+*/
 Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, bool _isDynamic)
 {
 	// if there are no vertices, return out
@@ -72,7 +74,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, 
 	radius = MagFloat3(SubFloat3(maxGlobal, centerGlobal));
 	rotQuat = XMQuaternionIdentity();
 	ARBBVisible = true;
-	vel = XMFLOAT3(0, 0, 0);
+	vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
 	// calculate center global
 	XMMATRIX mat = XMLoadFloat4x4(&localToGlobalMat);
@@ -166,6 +168,10 @@ Rigidbody::~Rigidbody()
 {
 	ClearCollisionList();
 }
+
+#pragma endregion
+
+#pragma region Getters and Setters
 // getters and setters
 // bounding sphere visible
 bool Rigidbody::GetBoundingSphereVisible() { return boundingSphereVisible; }
@@ -241,13 +247,16 @@ DirectX::XMFLOAT3 Rigidbody::GetParentalOffset()
 	return offset;
 }
 
+#pragma endregion
+
 // other methods
-		/*
-		* Clear the colliding list
-		* Params:
-		*	None
-		* Returns: None
-		*/
+
+/*
+* Clear the colliding list
+* Params:
+*	None
+* Returns: None
+*/
 void Rigidbody::ClearCollisionList()
 {
 	collidingCount = 0;
@@ -257,6 +266,8 @@ void Rigidbody::ClearCollisionList()
 		collidingArray = nullptr;
 	}
 }
+
+#pragma region IsColliding
 /*
 * Checks to see if this rigidbody is colliding with the incoing rigidbody
 * Params:
@@ -300,6 +311,9 @@ bool Rigidbody::IsColliding(Rigidbody* incoming)
 	return isColliding;
 }
 
+#pragma endregion
+
+#pragma region ApplyForce and Friction and ApplyGravity
 // applies friction by multiplying vel by a number less than 1
 void  Rigidbody::ApplyFriction(float incomingFrictionCoefficient) // dont call unless mioving   --  overcoming static coefficient of friction
 {
@@ -314,7 +328,7 @@ void  Rigidbody::ApplyFriction(float incomingFrictionCoefficient) // dont call u
 	vel.x *= (1 - incomingFrictionCoefficient);
 	vel.z *= (1 - incomingFrictionCoefficient);
 
-	if (MagFloat3(vel) < 0.01f)
+	if (MagFloat3(vel) < 0.0001f)
 	{
 		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	}
@@ -331,6 +345,15 @@ void  Rigidbody::ApplyForce(XMFLOAT3 incomingForce)
 	//f = m*a -> a = f/m
 	accel = AddFloat3(accel, DivFloat3(incomingForce, mass));
 }
+
+void Rigidbody::ApplyGrav(float gravity)
+{
+	accel.y += (-gravity);
+}
+
+#pragma endregion
+
+#pragma region ARBB
 
 /*
 * Uses ARBB collision detections to return if this is colliding with another giidbody
@@ -359,6 +382,9 @@ bool Rigidbody::ARBBCheck(Rigidbody* incoming)
 	return false;
 }
 
+#pragma endregion
+
+#pragma region SAT
 /*
 	* does the SAT collision check
 	* Arguments: the incoming rigidbody to collide with
@@ -562,7 +588,9 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	return 0;
 }
 
+#pragma endregion
 
+#pragma region update
 //  ISSUE: WORLD MATRIX DOES NOT UPDATE, MAKING THIS RELATIVE TO CENTER GLOBAAL WOULD BE POGGERS
 void  Rigidbody::Update(float deltaTime, float totalTime)  
 {
@@ -571,7 +599,16 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	if (!isGrounded)
 	{
 		// apply gravity
-		// ApplyForce(XMFLOAT3(0.0f, -grav, 0.0f));
+		ApplyGrav(grav);
+	}
+
+	// Applying a normal force from the collision to stop the object
+	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS
+	if (IsColliding(EntityManager::GetInstance()->GetRigidBodies()[1]))
+	{
+		// accel.y = 0.0f;
+		// vel.y = 0.0f;
+		ApplyForce(MultFloat3(vel, -1.0f));
 	}
 
 	// add accel to vel
@@ -581,14 +618,14 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	ApplyFriction();
 
 	// if vel is tiny, set to 0
-	if (MagFloat3(vel) < 0.01f)
+	if (MagFloat3(vel) < 0.001f)
 	{
 		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	}
 
 	// add vel to pos
 	pos = AddFloat3(pos, vel);
-	myTransform.MoveRelative(pos.x, pos.y, pos.z);
+	myTransform.MoveRelative(vel.x, vel.y, vel.z);
 
 	// updating local to global
 	localToGlobalMat = myTransform.GetWorldMatrix();
@@ -603,17 +640,12 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	minGlobal = GetMinGlobal();
 	maxGlobal = GetMaxGlobal();
 
-	// if it touches or is below ground, set to on ground
-	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS
-	if (IsColliding(EntityManager::GetInstance()->GetRigidBodies()[1]))
-	{
-		grav = 0.0f;
-		vel.y = 0.0f;
-	}
 }
 
+#pragma endregion
 
 
+#pragma region Helpers
 // helpers
 // Adding to XMFLOAT3's
 XMFLOAT3 Rigidbody::AddFloat3(XMFLOAT3 a, XMFLOAT3 b)
@@ -660,5 +692,7 @@ float Rigidbody::MagFloat3(XMFLOAT3 float3)
 {
 	// a^2 + b^2 + c^2 = d^2
 	// d = sqrt(a^2 + b^2 + c^2)
-	return sqrtf(powf(float3.x, 2.0f) + powf(float3.y, 2.0f) + powf(float3.z, 2.0f));
+	return abs(sqrtf(powf(float3.x, 2.0f) + powf(float3.y, 2.0f) + powf(float3.z, 2.0f)));
 }
+
+#pragma endregion
