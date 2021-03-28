@@ -1,6 +1,10 @@
 #include "Mesh.h"
 #include <fstream>
+#define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
+#include "includes/tiny_obj_loader.h"
 #include <vector>
+#include <iostream>
+#include <assert.h>
 
 using namespace DirectX;
 
@@ -29,6 +33,7 @@ Mesh::Mesh(Vertex vertices[],
 
 Mesh::Mesh(const char* objFile, ID3D11Device* device)
 {
+	// TinyOBJLoad(objFile, device);
 	// File input object
 	std::ifstream obj(objFile);
 
@@ -211,6 +216,201 @@ Mesh::Mesh(const char* objFile, ID3D11Device* device)
 	CreateBuffer(&verts[0], verts.size(), &indices[0], (int)indices.size(), device);
 	// Keep verts around for bounding box generation
 	this->verts = verts;
+}
+
+Mesh::Mesh(const char* file, ID3D11Device* buffer, bool useFBX)
+{
+	// only use this one if useFBX is true
+	// throw an exception because programmer is a dumb
+	if (!useFBX)
+	{
+		throw;
+	}
+
+	if (g_pFbxSdkManager == nullptr)
+	{
+		g_pFbxSdkManager = FbxManager::Create();
+
+		FbxIOSettings* pIOsettings = FbxIOSettings::Create(g_pFbxSdkManager, IOSROOT);
+		g_pFbxSdkManager->SetIOSettings(pIOsettings);
+	}
+
+	FbxImporter* pImporter = FbxImporter::Create(g_pFbxSdkManager, "");
+	FbxScene* pFbxScene = FbxScene::Create(g_pFbxSdkManager, "");
+
+	bool bSuccess = pImporter->Initialize(file, -1, g_pFbxSdkManager->GetIOSettings());
+	if (!bSuccess) throw;
+
+	bSuccess = pImporter->Import(pFbxScene);
+	if (!bSuccess) throw;
+
+	pImporter->Destroy();
+
+	FbxNode* pFbxRootNode = pFbxScene->GetRootNode();
+
+	std::vector<Vertex> verts;           // Verts we're assembling
+	std::vector<UINT> indices;           // Indices of these verts
+	unsigned int vertCounter = 0;        // Count of vertices/indices
+
+	if (pFbxRootNode)
+	{
+		for (int i = 0; i < pFbxRootNode->GetChildCount(); i++)
+		{
+			FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);
+
+			if (pFbxChildNode->GetNodeAttribute() == NULL)
+				continue;
+
+			FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();
+
+
+			if (AttributeType != FbxNodeAttribute::eMesh)
+				continue;
+
+			FbxMesh* pMesh = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
+
+			FbxVector4* pVertices = pMesh->GetControlPoints();
+			int num = pMesh->GetPolygonCount();
+			for (int j = 0; j < pMesh->GetPolygonCount(); j++)
+			{
+				FbxVector4 norm;
+				int iNumVertices = pMesh->GetPolygonSize(j);
+				// Gets the normal at a given index
+				if (!pMesh->GetPolygonVertexNormal(j, 0, norm))
+					throw;
+				if (iNumVertices == 3)
+				{
+					// This is a triangle face
+					assert(iNumVertices == 3);
+					// 
+					Vertex v1;
+					Vertex v2;
+					Vertex v3;
+					int i = pMesh->GetPolygonVertex(j, 0);
+					v1.Position = XMFLOAT3(
+						(float)pVertices[i].mData[0],
+						(float)pVertices[i].mData[1],
+						(float)pVertices[i].mData[2]);
+					i = pMesh->GetPolygonVertex(j, 1);
+					v2.Position = XMFLOAT3(
+						(float)pVertices[i].mData[0],
+						(float)pVertices[i].mData[1],
+						(float)pVertices[i].mData[2]);
+					i = pMesh->GetPolygonVertex(j, 2);
+					v3.Position = XMFLOAT3(
+						(float)pVertices[i].mData[0],
+						(float)pVertices[i].mData[1],
+						(float)pVertices[i].mData[2]);
+					for (int k = 0; k < iNumVertices; k++) {
+						int iControlPointIndex = pMesh->GetPolygonVertex(j, k);
+
+						Vertex vertex;
+						vertex.Position = XMFLOAT3(
+							(float)pVertices[iControlPointIndex].mData[0],
+							(float)pVertices[iControlPointIndex].mData[1],
+							(float)pVertices[iControlPointIndex].mData[2]);
+						vertex.Position.z *= -1;
+						verts.push_back(vertex);
+						// Add index
+						indices.push_back(vertCounter); vertCounter += 1;
+					}
+				}
+				else if (iNumVertices == 4)
+				{
+					// This is a quare face
+					assert(iNumVertices == 4);
+					continue;
+				}
+				else 
+				{
+					// unhandled number of verts?
+					// Just do your best, champ
+					continue;
+				}
+
+			}
+
+		}
+
+	}
+}
+
+void Mesh::TinyOBJLoad(const char* file, ID3D11Device* buffer)
+{
+	std::string inputfile = file;
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+
+	std::string warn;
+	std::string err;
+
+	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, inputfile.c_str());
+
+	if (!warn.empty()) {
+		std::cout << warn << std::endl;
+	}
+
+	if (!err.empty()) {
+		std::cerr << err << std::endl;
+	}
+
+	if (!ret) {
+		exit(1);
+	}
+
+	// Loop over shapes
+	for (size_t s = 0; s < shapes.size(); s++) {
+		// Loop over faces(polygon)
+		size_t index_offset = 0;
+		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+			size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
+
+			// Loop over vertices in the face.
+			for (size_t v = 0; v < fv; v++) {
+				// access to vertex
+				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+
+				tinyobj::real_t vx = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
+				tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
+				tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
+
+				// Check if `normal_index` is zero or positive. negative = no normal data
+				if (idx.normal_index >= 0) {
+					tinyobj::real_t nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
+					tinyobj::real_t ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
+					tinyobj::real_t nz = attrib.normals[3 * size_t(idx.normal_index) + 2];
+				}
+
+				// Check if `texcoord_index` is zero or positive. negative = no texcoord data
+				if (idx.texcoord_index >= 0) {
+					tinyobj::real_t tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+					tinyobj::real_t ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+				}
+				// Optional: vertex colors
+				// tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
+				// tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
+				// tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
+			}
+			index_offset += fv;
+
+			// per-face material
+			shapes[s].mesh.material_ids[f];
+		}
+	}
+	// Once file is loaded into attrib, create lists out of provided data
+
+	std::vector<XMFLOAT3> positions;     // Positions from the file
+	std::vector<XMFLOAT3> normals;       // Normals from the file
+	std::vector<XMFLOAT2> uvs;           // UVs from the file
+	for (int i = 0; i < attrib.vertices.size() / 3; i++)
+	{
+		positions.push_back(XMFLOAT3(attrib.vertices[(i * 3)], attrib.vertices[(i * 3) + 1], attrib.vertices[(i * 3) + 2]));
+	}
+	int t =  attrib.vertices.size();
+	t = attrib.normals.size();
+	t = attrib.texcoords.size();
+	t = 0;
 }
 
 // Creates buffers with information passed from the constructor

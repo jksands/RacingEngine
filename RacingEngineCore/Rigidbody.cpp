@@ -571,7 +571,7 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	if (!isGrounded)
 	{
 		// apply gravity
-		ApplyForce(XMFLOAT3(0.0f, -grav, 0.0f));
+		// ApplyForce(XMFLOAT3(0.0f, -grav, 0.0f));
 	}
 
 	// add accel to vel

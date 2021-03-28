@@ -212,13 +212,14 @@ void Game::LoadMeshes()
 	meshes.push_back(new Mesh("../../Assets/Models/helix.obj", device));
 	meshes.push_back(new Mesh("../../Assets/Models/cube.obj", device));
 	meshes.push_back(new Mesh("../../Assets/Models/Car.obj", device));
+	// meshes.push_back(new Mesh("../../Assets/FBX/Car2.fbx", device, true));
 }
 
 // Creates entities.  Can choose any mesh and any material, and position anywhere
 void Game::CreateEntities()
 {
 	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));E
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, 5, 0), XMFLOAT3(.05f,.05f,.05f)), true));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.05f,.05f,.05f)), true));
 	// floor
 	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(0, -5, 0), XMFLOAT3(20.0f, 2.0f, 50.0f)), true, false));
 

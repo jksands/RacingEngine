@@ -2,6 +2,7 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <vector>
+#include <fbxsdk.h>
 #include "Vertex.h"
 /// <summary>
 /// Class to hold Mesh data and vertex and index buffers for each.
@@ -11,6 +12,8 @@ class Mesh
 public:
 	Mesh(Vertex vertices[], int vertexAmt, UINT _indices[], int indexAmt, ID3D11Device* device);
 	Mesh(const char* file, ID3D11Device* buffer);
+	Mesh(const char* file, ID3D11Device* buffer, bool useFBX);
+	void TinyOBJLoad(const char* file, ID3D11Device* buffer);
 	void CreateBuffer(Vertex vertices[], int vertexAmt, UINT _indices[], int indexAmt, ID3D11Device* device);
 	void CalculateTangents(Vertex* verts, int numVerts, unsigned int* indices, int numIndices);
 	~Mesh();
@@ -22,6 +25,8 @@ public:
 	std::vector<Vertex> GetVertices();
 
 private:
+	// FBX manager
+	FbxManager* g_pFbxSdkManager = nullptr;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 	int indices = 0;
