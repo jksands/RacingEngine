@@ -16,7 +16,6 @@ protected:
 	float radius = 0.0f;
 
 	bool isGrounded = false;
-
 	// colour of the bounding boxes when they're drawn
 	DirectX::XMFLOAT3 collidingColour = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
 	DirectX::XMFLOAT3 notCollidingColour = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -49,7 +48,7 @@ protected:
 	float mass = 1.0f;
 
 	// gravity
-	float grav = 0.011f;
+	float grav = 0.005f;
 	// Is it dynamic?
 	bool isDynamic;
 
@@ -133,6 +132,9 @@ public:
 	* OUTPUT: NONE
 	*/
 	void ApplyForce(DirectX::XMFLOAT3 incomingForce);
+
+	void ApplyGrav(float gravity);
+
 	// TO DO: MILESTONE 2
 	/*
 	* does the SAT collision check
