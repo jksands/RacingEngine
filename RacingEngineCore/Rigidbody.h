@@ -47,6 +47,9 @@ protected:
 
 	// gravity
 	float grav = 0.005f;
+	float speed = 0.025f;
+	float turnRadius = 0.5f;
+
 	// Is it dynamic?
 	bool isDynamic;
 
@@ -192,6 +195,10 @@ public:
 	* returns true if colliding false if not collidiing
 	*/
 	bool ARBBCheck(Rigidbody* incoming);
+
+	// Detecting and resolving inputs
+	void ResolveInputs();
+
 #pragma region GettersAndSetters
 	// bounding spehere visibility
 	bool GetBoundingSphereVisible();

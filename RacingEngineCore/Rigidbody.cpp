@@ -628,6 +628,8 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 		ApplyGrav(grav);
 	}
 
+	ResolveInputs();
+
 	// Applying a normal force from the collision to stop the object
 	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS
 	if (IsColliding(EntityManager::GetInstance()->GetRigidBodies()[1]))
@@ -719,6 +721,50 @@ float Rigidbody::MagFloat3(XMFLOAT3 float3)
 	// a^2 + b^2 + c^2 = d^2
 	// d = sqrt(a^2 + b^2 + c^2)
 	return abs(sqrtf(powf(float3.x, 2.0f) + powf(float3.y, 2.0f) + powf(float3.z, 2.0f)));
+}
+
+// gathers inputs and applies the appripriate force
+void Rigidbody::ResolveInputs()
+{
+	// if w, apply force on forward axis
+	if (GetAsyncKeyState('W') & 0x8000) 
+	{ 
+		// use the local z axis
+		XMFLOAT3 tempForce = XMFLOAT3(0.0f, 0.0f, 1.0f);
+
+		// multiply the force by the speed
+		tempForce = MultFloat3(tempForce, speed);
+
+		//apply the force
+		ApplyForce(tempForce); 
+	}
+
+	// if S, apply force on (-1)forward axis
+	if (GetAsyncKeyState('S') & 0x8000)
+	{
+		// use the local z axis
+		XMFLOAT3 tempForce = XMFLOAT3(0.0f, 0.0f, -1.0f);
+
+		// multiply the force by the speed
+		tempForce = MultFloat3(tempForce, speed);
+
+		//apply the force
+		ApplyForce(tempForce);
+	}
+
+	// if a, negative rotation on the Y axis
+	if (GetAsyncKeyState('A') & 0x8000)
+	{
+		// negative rotation on Y axis by the turn radius
+		myTransform.Rotate(0.0f, -turnRadius, 0.0f);
+	}
+
+	// if d, positive rotation on the Y axis
+	if (GetAsyncKeyState('D') & 0x8000)
+	{
+		// positive rotation on Y axis by the turn radius
+		myTransform.Rotate(0.0f, turnRadius, 0.0f);
+	}
 }
 
 #pragma endregion
