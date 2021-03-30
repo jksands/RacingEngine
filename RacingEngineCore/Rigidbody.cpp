@@ -331,9 +331,9 @@ bool Rigidbody::IsColliding(Rigidbody* incoming)
 void  Rigidbody::ApplyFriction(float incomingFrictionCoefficient) // dont call unless mioving   --  overcoming static coefficient of friction
 {
 	// makes sure it's not too low
-	if (incomingFrictionCoefficient < 0.01f)
+	if (incomingFrictionCoefficient < 0.0001f)
 	{
-		incomingFrictionCoefficient = 0.01f;
+		incomingFrictionCoefficient = 0.00001f;
 	}
 
 	// coudl probs change these to just the x and z components. Don't need to update the y
@@ -621,6 +621,7 @@ int Rigidbody::SAT(Rigidbody* incoming)
 void  Rigidbody::Update(float deltaTime, float totalTime)  
 {
 	accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	float tempFric;
 
 	if (!isGrounded)
 	{
@@ -628,6 +629,7 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 		ApplyGrav(grav);
 	}
 
+	// WASD
 	ResolveInputs();
 
 	// Applying a normal force from the collision to stop the object
@@ -636,7 +638,9 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	{
 		// accel.y = 0.0f;
 		// vel.y = 0.0f;
-		ApplyForce(MultFloat3(vel, -1.0f));
+		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		tempFric = EntityManager::GetInstance()->GetRigidBodies()[1]->frictionCoeff;
 		tint = XMFLOAT4(1, 0, 0, 0);
 	}
 	else
@@ -648,13 +652,21 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	vel = AddFloat3(vel, accel);
 
 	// apply friction
-	ApplyFriction();
+	if (tempFric > 0.0f)
+	{
+		ApplyFriction(tempFric);
+	}
+	else
+	{
+		ApplyFriction();
+	}
 
+	// I don't think I need this because I do the same exact thing in ApplyFriction
 	// if vel is tiny, set to 0
-	if (MagFloat3(vel) < 0.001f)
+	/*if (MagFloat3(vel) < 0.0001f)
 	{
 		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	}
+	}*/
 
 	// add vel to pos
 	pos = AddFloat3(pos, vel);
@@ -675,6 +687,8 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 
 #pragma region Helpers
 // helpers
+
+#pragma region XMFLOAT3 Maths
 // Adding to XMFLOAT3's
 XMFLOAT3 Rigidbody::AddFloat3(XMFLOAT3 a, XMFLOAT3 b)
 {
@@ -722,7 +736,9 @@ float Rigidbody::MagFloat3(XMFLOAT3 float3)
 	// d = sqrt(a^2 + b^2 + c^2)
 	return abs(sqrtf(powf(float3.x, 2.0f) + powf(float3.y, 2.0f) + powf(float3.z, 2.0f)));
 }
+#pragma endregion
 
+#pragma region ResolveInputs
 // gathers inputs and applies the appripriate force
 void Rigidbody::ResolveInputs()
 {
@@ -766,5 +782,6 @@ void Rigidbody::ResolveInputs()
 		myTransform.Rotate(0.0f, turnRadius, 0.0f);
 	}
 }
+#pragma endregion
 
 #pragma endregion

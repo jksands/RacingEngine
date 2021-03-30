@@ -43,12 +43,13 @@ protected:
 	DirectX::XMVECTOR rotQuat;
 	DirectX::XMFLOAT3 size = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	DirectX::XMFLOAT3 vel = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
-	float mass = 1.0f;
+	float mass = 2.0f;
 
 	// gravity
-	float grav = 0.005f;
-	float speed = 0.025f;
+	float grav = 0.0005f;
+	float speed = 0.005f;
 	float turnRadius = 0.5f;
+	float frictionCoeff = 0.0f;
 
 	// Is it dynamic?
 	bool isDynamic;
@@ -70,7 +71,7 @@ public:
 	*	std::vector<DirectX::XMFLOAT3> pointList: the points to make the rigidbody out of
 	* Returns: an instance of the class
 	*/
-	Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, bool _isDynamic = true);
+	Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, bool _isDynamic = true, float friction = 0.0f);
 	/*
 	* Copy Constructor
 	* Params:
@@ -129,7 +130,7 @@ public:
 	*	float incomingFrictionCoefficient -- coefficient of friction to be used in the friction equations
 	OUTPUT: NONE
 	*/
-	void ApplyFriction(float incomingFrictionCoefficient = 0.05f);
+	void ApplyFriction(float incomingFrictionCoefficient = 0.005f);
 	/*
 	* Applies a force to the rigidbody
 	* ARGUMENTS: DirectX::XMFLOAT3 incomingForce -- force being applied to the rigidbody
