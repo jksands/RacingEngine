@@ -653,11 +653,12 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS
 	if (IsColliding(EntityManager::GetInstance()->GetRigidBodies()[1]))
 	{
-		// accel.y = 0.0f;
-		// vel.y = 0.0f;
-		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		// THIS WORKS AND KEEPS CAR STILL
+		accel.y = 0.0f;
+		vel.y = 0.0f;
+		// vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 		// accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		tempFric = EntityManager::GetInstance()->GetRigidBodies()[1]->frictionCoeff;
+		// tempFric = EntityManager::GetInstance()->GetRigidBodies()[1]->frictionCoeff;
 		tint = XMFLOAT4(1, 0, 0, 0);
 	}
 	else
