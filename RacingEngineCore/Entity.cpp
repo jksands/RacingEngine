@@ -33,7 +33,9 @@ void Entity::Update(float deltaTime, float totalTime)
 		rb->Update(deltaTime, totalTime);
 		// ADD OVERLOAD TO TRANSFORM: AddOffset
 		XMFLOAT3 tPos = rb->GetParentalOffset();
+		// tPos = XMFLOAT3(0,0,0);
 		XMFLOAT3 cPos = rb->GetCenterGlobal();
+		// The rigidbody has moved, so we move the mesh to follow it
 		transform.SetPosition(cPos.x + tPos.x, cPos.y+ tPos.y, cPos.z + tPos.z);
 	}
 }

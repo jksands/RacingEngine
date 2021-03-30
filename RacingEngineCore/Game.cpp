@@ -230,9 +230,9 @@ void Game::LoadMeshes()
 void Game::CreateEntities()
 {
 	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));E
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.05f,.05f,.05f)), true));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, 0.0f, 0), XMFLOAT3(.05f, .05f, .05f)), true));
 	// floor
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(0, -10, 30), XMFLOAT3(20.0f, 2.0f, 50.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-12.2f, -1.0f, 30.8f), XMFLOAT3(20.0f, 2.0f, 50.0f)), true, false));
 
 	// FBX model
 	// EntityManager::GetInstance()->AddEntity(new Entity(meshes[4], materials[5], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.1f, .1f, .1f))));

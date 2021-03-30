@@ -62,6 +62,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, 
 	halfWidthOBB = DivFloat3(SubFloat3(maxLocal, minLocal), 2.0f);
 	XMFLOAT3 tempScale = myTransform.GetScale();
 	halfWidthOBB = XMFLOAT3(halfWidthOBB.x * tempScale.x, halfWidthOBB.y * tempScale.y, halfWidthOBB.z * tempScale.z);
+	radius = MagFloat3(halfWidthOBB);
 
 	// setting max global and min global
 	// min
@@ -74,7 +75,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, 
 	// find the centre
 	centerLocal = DivFloat3(AddFloat3(maxLocal, minLocal), 2.0f);
 	// find the radius by distance bettwen centre and either min or max
-	radius = MagFloat3(SubFloat3(maxGlobal, GetCenterGlobal()));
+	// radius = MagFloat3(SubFloat3(maxGlobal, GetCenterGlobal()));
 	rotQuat = XMQuaternionIdentity();
 	ARBBVisible = true;
 	vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -429,11 +430,22 @@ int Rigidbody::SAT(Rigidbody* incoming)
 		XMVector3Normalize(XMVector3Transform(xAxis, myWorldMat)),
 		XMVector3Normalize(XMVector3Transform(yAxis, myWorldMat)),
 		XMVector3Normalize(XMVector3Transform(zAxis, myWorldMat))
+		// XMVector3Transform(xAxis, myWorldMat),
+		// XMVector3Transform(yAxis, myWorldMat),
+		// XMVector3Transform(zAxis, myWorldMat)
 	};
+	XMFLOAT3 rotation = incoming->myTransform.GetPitchYawRoll();
+	XMVECTOR quat = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 	XMVECTOR yourAxes[] = {
-		XMVector3Normalize(XMVector3Transform(xAxis, yourWorldMat)),
-		XMVector3Normalize(XMVector3Transform(yAxis, yourWorldMat)),
-		XMVector3Normalize(XMVector3Transform(zAxis, yourWorldMat))
+		XMVector3Rotate(xAxis, quat),
+		XMVector3Rotate(yAxis, quat),
+		XMVector3Rotate(zAxis, quat)
+		// XMVector3Normalize(XMVector3Transform(xAxis, yourWorldMat)),
+		// XMVector3Normalize(XMVector3Transform(yAxis, yourWorldMat)),
+		// XMVector3Normalize(XMVector3Transform(zAxis, yourWorldMat))
+		// XMVector3Transform(xAxis, yourWorldMat),
+		// XMVector3Transform(yAxis, yourWorldMat),
+		// XMVector3Transform(zAxis, yourWorldMat)
 	};
 
 	// compute rotation matrix: incoming in my coordinate frame
@@ -458,7 +470,7 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	float tY = XMVectorGetY(XMVector3Dot(transVec, myAxes[1]));
 	float tZ = XMVectorGetZ(XMVector3Dot(transVec, myAxes[2]));
 	XMFLOAT3 tempF3 = XMFLOAT3(tX, tY, tZ);
-	transVec = XMLoadFloat3(&tempF3);
+	// transVec = XMLoadFloat3(&tempF3);
 
 	// i think i need absR bc parrallell makes math sadger
 	for (int i = 0; i < 3; i++)
@@ -471,6 +483,9 @@ int Rigidbody::SAT(Rigidbody* incoming)
 
 	// testing the axes
 
+	XMFLOAT3 hw = incoming->GetHalfWidth();
+	XMFLOAT3 rotVec;
+	XMStoreFloat3(&rotVec, XMVector3Rotate(XMLoadFloat3(&hw), quat));
 	// L = A0, l + A1, L = A2
 	for (int i = 0; i < 3; i++)
 	{
@@ -480,26 +495,28 @@ int Rigidbody::SAT(Rigidbody* incoming)
 		if (i == 0)
 		{
 			myRadius = GetHalfWidth().x;
+			yourRadius = rotVec.x;
 			temp = XMVectorGetX(transVec);
 		}
 		else if (i == 1)
 		{
 			myRadius = GetHalfWidth().y;
+			yourRadius = rotVec.y;
 			temp = XMVectorGetY(transVec);
 		}
 		else if (i == 2)
 		{
 			myRadius = GetHalfWidth().z;
+			yourRadius = rotVec.z;
 			temp = XMVectorGetZ(transVec);
 		}
-		XMFLOAT3 hw = incoming->GetHalfWidth();
 		float a = hw.x * absRotMax.m[i][0];
 		float b = hw.y * absRotMax.m[i][1];
 		float c = hw.z * absRotMax.m[i][2];
-		yourRadius = 
+		/*yourRadius = 
 			a + 
 			b + 
-			c;
+			c;*/
 
 		if (abs(temp) > myRadius + yourRadius)
 		{
@@ -528,9 +545,9 @@ int Rigidbody::SAT(Rigidbody* incoming)
 		myRadius = GetHalfWidth().x * absRotMax.m[0][i] + GetHalfWidth().y * absRotMax.m[1][i] + GetHalfWidth().z * absRotMax.m[2][i];
 
 		if (abs(
-			XMVectorGetX(transVec) * rotationMatrix.m[0][i] + 
-			XMVectorGetY(transVec) * rotationMatrix.m[1][i] + 
-			XMVectorGetZ(transVec) * rotationMatrix.m[2][i]) 
+			XMVectorGetX(transVec) * rotationMatrix.m[i][0] + 
+			XMVectorGetY(transVec) * rotationMatrix.m[i][1] + 
+			XMVectorGetZ(transVec) * rotationMatrix.m[i][2]) 
 				> myRadius + yourRadius)
 		{
 			return 1;
@@ -632,9 +649,9 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS
 	if (IsColliding(EntityManager::GetInstance()->GetRigidBodies()[1]))
 	{
-		// accel.y = 0.0f;
-		// vel.y = 0.0f;
-		ApplyForce(MultFloat3(vel, -1.0f));
+		accel.y = 0.0f;
+		vel.y = 0.0f;
+		// ApplyForce(MultFloat3(vel, -1.0f));
 		tint = XMFLOAT4(1, 0, 0, 0);
 	}
 	else
