@@ -53,7 +53,7 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, 
 		// vs->CopyAllBufferData();
 
 		ps->SetShaderResourceView("EnvironmentMap", material->GetSRV());
-		ps->SetSamplerState("BasicSampler", material->GetSampler());
+		ps->SetSamplerState("samplerOptions", material->GetSampler());
 	}
 	else
 	{
@@ -64,8 +64,9 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, 
 
 		ps->SetFloat3("camPos", cam->GetTransform().GetPosition());
 		ps->SetFloat("spec", material->GetSpecIntensity());
-		ps->SetSamplerState("samplerOptions", material->GetSampler());
-		ps->SetShaderResourceView("diffuseTexture", material->GetSRV());
+		// Not needed until there's texture data
+		// ps->SetSamplerState("samplerOptions", material->GetSampler());
+		// ps->SetShaderResourceView("diffuseTexture", material->GetSRV());
 		if (material->GetNormalMap())
 		{
 			ps->SetShaderResourceView("normalMap", material->GetNormalMap());
@@ -78,6 +79,7 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, 
 
 	// Set buffers before drawing
 	UINT stride = sizeof(Vertex);
+	// if (type != 'S') stride = sizeof(MinimumVertex);
 	UINT offset = 0;
 	ctx->IASetVertexBuffers(0, 1, mesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
 	ctx->IASetIndexBuffer(mesh->GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
@@ -106,20 +108,54 @@ void Entity::DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camer
 	XMFLOAT3 pos = rb->GetCenterGlobal();
 	temp.SetPosition(pos.x, pos.y, pos.z);
 
+	vs->SetFloat4("tint", rb->tint);
+	vs->SetMatrix4x4("world", temp.GetWorldMatrix());
+	vs->SetMatrix4x4("view", cam->GetViewMatrix());
+	vs->SetMatrix4x4("proj", cam->GetProjectionMatrix());
+
+
+
+	// Copy buffer data
+	vs->CopyAllBufferData();
+	// ps->CopyAllBufferData();
+
+	// Set buffers before drawing
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	ctx->IASetVertexBuffers(0, 1, colliderMesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
+	ctx->IASetIndexBuffer(colliderMesh->GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	// Actual Draw call
+	ctx->DrawIndexed(
+		colliderMesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
+		0,     // Offset to the first index we want to use
+		0);    // Offset to add to each index when looking up vertices
+}
+
+void Entity::DrawDebugObject(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps)
+{
+	// Set shaders in Entity Draw -> INEFFICIENT, WILL IMPLEMENT RENDER ORDER IN FUTURE!
+	vs->SetShader();
+	ps->SetShader();
+
+
+	Transform temp = transform;
+	temp.SetScale(1.0f, 1.0f, 1.0f);
+	XMFLOAT3 pos = rb->GetMaxGlobal();
+	// pos = rb->myTransform.GetPosition();
+	XMFLOAT3 poffset = rb->GetParentalOffset();
+	poffset = XMFLOAT3(0, 0, 0);
+	temp.SetPosition(pos.x + poffset.x, pos.y + poffset.y, pos.z + poffset.z);
+
 	vs->SetFloat4("tint", material->GetTint());
 	vs->SetMatrix4x4("world", temp.GetWorldMatrix());
 	vs->SetMatrix4x4("view", cam->GetViewMatrix());
 	vs->SetMatrix4x4("proj", cam->GetProjectionMatrix());
 
-	ps->SetFloat3("camPos", cam->GetTransform().GetPosition());
-	ps->SetFloat("spec", material->GetSpecIntensity());
-	ps->SetSamplerState("samplerOptions", material->GetSampler());
-	ps->SetShaderResourceView("diffuseTexture", material->GetSRV());
-
 
 	// Copy buffer data
 	vs->CopyAllBufferData();
-	ps->CopyAllBufferData();
+	// ps->CopyAllBufferData();
 
 	// Set buffers before drawing
 	UINT stride = sizeof(Vertex);

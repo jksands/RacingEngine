@@ -64,7 +64,10 @@ Game::~Game()
 	delete normalMapPS;
 	delete skyVS;
 	delete skyPS;
+	delete bareVS;
+	delete barePS;
 	delete skyboxEntity;
+	delete debugEntity;
 	delete colorPS;
 	delete EntityManager::GetInstance();
 }
@@ -156,6 +159,12 @@ void Game::LoadShaders()
 
 	colorPS = new SimplePixelShader(device, context);
 	colorPS->LoadShaderFile(L"ColorPS.cso");
+
+	bareVS = new SimpleVertexShader(device, context);
+	bareVS->LoadShaderFile(L"BareVS.cso");
+
+	barePS = new SimplePixelShader(device, context);
+	barePS->LoadShaderFile(L"BarePS.cso");
 }
 
 void Game::LoadTextures()
@@ -203,6 +212,8 @@ void Game::LoadMaterials()
 	materials.push_back(new Material(normalMapPS, normalMapVS, XMFLOAT4(1, 1, 1, 0), 1.0f, rocks, sampler, rocksNM));
 	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(0, 0, 1, 0), 1.0f, metal, sampler));
 	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f));
+	materials.push_back(new Material(colorPS, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f));
+	materials.push_back(new Material(barePS, bareVS, XMFLOAT4(1, 1, 1, 0), 0.1f));
 }
 
 // Loads a mesh from a file - Can create a mesh yourself should you desire
@@ -212,7 +223,7 @@ void Game::LoadMeshes()
 	meshes.push_back(new Mesh("../../Assets/Models/helix.obj", device));
 	meshes.push_back(new Mesh("../../Assets/Models/cube.obj", device));
 	meshes.push_back(new Mesh("../../Assets/Models/Car.obj", device));
-	// meshes.push_back(new Mesh("../../Assets/FBX/Car2.fbx", device, true));
+	// meshes.push_back(new Mesh("../../Assets/FBX/car3.fbx", device, true));
 }
 
 // Creates entities.  Can choose any mesh and any material, and position anywhere
@@ -221,9 +232,13 @@ void Game::CreateEntities()
 	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));E
 	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.05f,.05f,.05f)), true));
 	// floor
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(0, -5, 0), XMFLOAT3(20.0f, 2.0f, 50.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(0, -10, 30), XMFLOAT3(20.0f, 2.0f, 50.0f)), true, false));
+
+	// FBX model
+	// EntityManager::GetInstance()->AddEntity(new Entity(meshes[4], materials[5], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.1f, .1f, .1f))));
 
 	skyboxEntity = new Entity(meshes[2], materials[0]);
+	debugEntity = new Entity(meshes[0], materials[4]);
 }
 
 // Creates lights.
@@ -392,8 +407,8 @@ void Game::Draw(float deltaTime, float totalTime)
 		entities[i]->Draw(context, cam);
 	}
 
-	// Set draw type to be LINE in some way
 
+	// Set draw type to be LINE in some way
 
 	context->RSSetState(lineRasterState.Get());
 	// for each entity
@@ -405,6 +420,8 @@ void Game::Draw(float deltaTime, float totalTime)
 			// To draw different types of colliders based on
 			// data passed in
 			entities[i]->DrawCollider(context, cam, meshes[2], vertexShader, colorPS);
+			entities[i]->DrawDebugObject(context, cam, meshes[0], vertexShader, colorPS);
+
 
 		}
 	}

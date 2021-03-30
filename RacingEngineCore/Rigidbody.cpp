@@ -58,6 +58,11 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, 
 	myTransform = incomingTransform;
 	localToGlobalMat = myTransform.GetWorldMatrix();
 
+	// half width is dist between min and max over 2
+	halfWidthOBB = DivFloat3(SubFloat3(maxLocal, minLocal), 2.0f);
+	XMFLOAT3 tempScale = myTransform.GetScale();
+	halfWidthOBB = XMFLOAT3(halfWidthOBB.x * tempScale.x, halfWidthOBB.y * tempScale.y, halfWidthOBB.z * tempScale.z);
+
 	// setting max global and min global
 	// min
 	minGlobal = GetMinGlobal();
@@ -68,10 +73,8 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, 
 
 	// find the centre
 	centerLocal = DivFloat3(AddFloat3(maxLocal, minLocal), 2.0f);
-	// half width is dist between min and max over 2
-	halfWidthOBB = DivFloat3(SubFloat3(maxGlobal, minGlobal), 2.0f);
 	// find the radius by distance bettwen centre and either min or max
-	radius = MagFloat3(SubFloat3(maxGlobal, centerGlobal));
+	radius = MagFloat3(SubFloat3(maxGlobal, GetCenterGlobal()));
 	rotQuat = XMQuaternionIdentity();
 	ARBBVisible = true;
 	vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -80,6 +83,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, 
 	XMMATRIX mat = XMLoadFloat4x4(&localToGlobalMat);
 	XMVECTOR pos = XMLoadFloat3(&centerLocal);
 	XMStoreFloat3(&centerGlobal, XMVector3Transform(pos, mat));
+	// centerGlobal = GetCenterGlobal();
 
 	// After calculating center global, get the offset between US and the parent center
 	offset = SubFloat3(myTransform.GetPosition(), centerGlobal);
@@ -196,27 +200,36 @@ XMFLOAT3 Rigidbody::GetCentreLocal() { return centerLocal; }
 XMFLOAT3 Rigidbody::GetMinLocal() { return minLocal; }
 XMFLOAT3 Rigidbody::GetMaxLocal() { return maxLocal; }
 //global variables
-XMFLOAT3 Rigidbody::GetCenterGlobal() { return centerGlobal; }
-XMFLOAT3 Rigidbody::GetMinGlobal() // { return AddFloat3(centerGlobal, MultFloat3(halfWidthOBB, -1)); }
-{
+XMFLOAT3 Rigidbody::GetCenterGlobal() { 
+
 	// calculate center global
 	XMMATRIX mat = XMLoadFloat4x4(&localToGlobalMat);
-	XMVECTOR p = XMLoadFloat3(&minLocal);
+	XMFLOAT4 tP = XMFLOAT4(centerLocal.x, centerLocal.y, centerLocal.z, 1.0f);
+	XMVECTOR p = XMLoadFloat4(&tP);
+	XMFLOAT3 temp;
+	XMStoreFloat3(&temp, XMVector3Transform(p, mat));
+	return temp; }
+XMFLOAT3 Rigidbody::GetMinGlobal() { return AddFloat3(GetCenterGlobal(), MultFloat3(halfWidthOBB, -1)); }
+//{
+//	// calculate center global
+//	XMMATRIX mat = XMLoadFloat4x4(&localToGlobalMat);
+//	XMFLOAT3 temp = AddFloat3(offset, minLocal);
+//	XMVECTOR p = XMLoadFloat3(&minLocal);
+//
+//	XMStoreFloat3(&minGlobal, XMVector3Transform(p, mat));
+//
+//	return minGlobal;
+//} 
 
-	XMStoreFloat3(&minGlobal, XMVector3Transform(p, mat));
-
-	return minGlobal;
-} 
-
-XMFLOAT3 Rigidbody::GetMaxGlobal() // { return AddFloat3(centerGlobal, halfWidthOBB); }
-{ // calculate center global
-	XMMATRIX mat = XMLoadFloat4x4(&localToGlobalMat);
-	XMVECTOR p = XMLoadFloat3(&maxLocal);
-
-	XMStoreFloat3(&maxGlobal, XMVector3Transform(p, mat));
-
-	return maxGlobal;
-} 
+XMFLOAT3 Rigidbody::GetMaxGlobal() { return AddFloat3(GetCenterGlobal(), halfWidthOBB); }
+//{ // calculate center global
+//	XMMATRIX mat = XMLoadFloat4x4(&localToGlobalMat);
+//	XMVECTOR p = XMLoadFloat3(&maxLocal);
+//
+//	XMStoreFloat3(&maxGlobal, XMVector3Transform(p, mat));
+//
+//	return maxGlobal;
+//} 
 
 // halfWidth 
 XMFLOAT3 Rigidbody::GetHalfWidth() { return halfWidthOBB; }
@@ -278,7 +291,7 @@ bool Rigidbody::IsColliding(Rigidbody* incoming)
 {
 	// sphere collision precheck
 	bool isColliding;
-	if (MagFloat3(SubFloat3(centerGlobal, incoming->GetCenterGlobal())) <= radius + incoming->GetRadius())
+	if (MagFloat3(SubFloat3(GetCenterGlobal(), incoming->GetCenterGlobal())) <= radius + incoming->GetRadius())
 	{
 		isColliding = true;
 		isGrounded = true;
@@ -414,13 +427,13 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	// get all the axes for each object
 	XMVECTOR myAxes[] = {
 		XMVector3Normalize(XMVector3Transform(xAxis, myWorldMat)),
-		XMVector3Normalize(XMVector3Transform(xAxis, myWorldMat)),
-		XMVector3Normalize(XMVector3Transform(xAxis, myWorldMat))
+		XMVector3Normalize(XMVector3Transform(yAxis, myWorldMat)),
+		XMVector3Normalize(XMVector3Transform(zAxis, myWorldMat))
 	};
 	XMVECTOR yourAxes[] = {
 		XMVector3Normalize(XMVector3Transform(xAxis, yourWorldMat)),
-		XMVector3Normalize(XMVector3Transform(xAxis, yourWorldMat)),
-		XMVector3Normalize(XMVector3Transform(xAxis, yourWorldMat))
+		XMVector3Normalize(XMVector3Transform(yAxis, yourWorldMat)),
+		XMVector3Normalize(XMVector3Transform(zAxis, yourWorldMat))
 	};
 
 	// compute rotation matrix: incoming in my coordinate frame
@@ -437,10 +450,13 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	// incoming centre global - my center global
 	XMVECTOR transVec = XMLoadFloat3(&SubFloat3(incoming->GetCenterGlobal(),GetCenterGlobal()));
 
+	XMFLOAT3 myGlob = GetCenterGlobal();
+	XMFLOAT3 yourGlob = incoming->GetCenterGlobal();
+
 	// bring tanslation vector into a's coord frame
 	float tX = XMVectorGetX(XMVector3Dot(transVec, myAxes[0]));
-	float tY = XMVectorGetX(XMVector3Dot(transVec, myAxes[1]));
-	float tZ = XMVectorGetX(XMVector3Dot(transVec, myAxes[2]));
+	float tY = XMVectorGetY(XMVector3Dot(transVec, myAxes[1]));
+	float tZ = XMVectorGetZ(XMVector3Dot(transVec, myAxes[2]));
 	XMFLOAT3 tempF3 = XMFLOAT3(tX, tY, tZ);
 	transVec = XMLoadFloat3(&tempF3);
 
@@ -476,8 +492,14 @@ int Rigidbody::SAT(Rigidbody* incoming)
 			myRadius = GetHalfWidth().z;
 			temp = XMVectorGetZ(transVec);
 		}
-
-		yourRadius = incoming->GetHalfWidth().x * absRotMax.m[i][0] + incoming->GetHalfWidth().y * absRotMax.m[i][1] + incoming->GetHalfWidth().z * absRotMax.m[i][2];
+		XMFLOAT3 hw = incoming->GetHalfWidth();
+		float a = hw.x * absRotMax.m[i][0];
+		float b = hw.y * absRotMax.m[i][1];
+		float c = hw.z * absRotMax.m[i][2];
+		yourRadius = 
+			a + 
+			b + 
+			c;
 
 		if (abs(temp) > myRadius + yourRadius)
 		{
@@ -505,13 +527,17 @@ int Rigidbody::SAT(Rigidbody* incoming)
 
 		myRadius = GetHalfWidth().x * absRotMax.m[0][i] + GetHalfWidth().y * absRotMax.m[1][i] + GetHalfWidth().z * absRotMax.m[2][i];
 
-		if (abs(XMVectorGetX(transVec) * rotationMatrix.m[0][i] + XMVectorGetY(transVec) * rotationMatrix.m[1][i] + XMVectorGetZ(transVec) * rotationMatrix.m[2][i]) 
+		if (abs(
+			XMVectorGetX(transVec) * rotationMatrix.m[0][i] + 
+			XMVectorGetY(transVec) * rotationMatrix.m[1][i] + 
+			XMVectorGetZ(transVec) * rotationMatrix.m[2][i]) 
 				> myRadius + yourRadius)
 		{
 			return 1;
 		}
 	}
-
+	XMFLOAT3 myRad = GetHalfWidth();
+	XMFLOAT3 yourRad = incoming->GetHalfWidth();
 	 // L = A0 x B0 
 	myRadius = GetHalfWidth().y * absRotMax.m[2][0] + GetHalfWidth().z * absRotMax.m[1][0];
 	yourRadius = incoming->GetHalfWidth().y * absRotMax.m[0][2] + incoming->GetHalfWidth().z * absRotMax.m[0][1];
@@ -609,6 +635,11 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 		// accel.y = 0.0f;
 		// vel.y = 0.0f;
 		ApplyForce(MultFloat3(vel, -1.0f));
+		tint = XMFLOAT4(1, 0, 0, 0);
+	}
+	else
+	{
+		tint = XMFLOAT4(1, 1, 1, 0);
 	}
 
 	// add accel to vel
@@ -630,11 +661,6 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	// updating local to global
 	localToGlobalMat = myTransform.GetWorldMatrix();
 
-	// calculate center global
-	XMMATRIX mat = XMLoadFloat4x4(&localToGlobalMat);
-	XMVECTOR p = XMLoadFloat3(&pos);
-
-	XMStoreFloat3(&centerGlobal, XMVector3Transform(p, mat));
 
 	// min and max global
 	minGlobal = GetMinGlobal();

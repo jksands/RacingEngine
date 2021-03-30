@@ -218,122 +218,166 @@ Mesh::Mesh(const char* objFile, ID3D11Device* device)
 	this->verts = verts;
 }
 
-Mesh::Mesh(const char* file, ID3D11Device* buffer, bool useFBX)
-{
-	// only use this one if useFBX is true
-	// throw an exception because programmer is a dumb
-	if (!useFBX)
-	{
-		throw;
-	}
-
-	if (g_pFbxSdkManager == nullptr)
-	{
-		g_pFbxSdkManager = FbxManager::Create();
-
-		FbxIOSettings* pIOsettings = FbxIOSettings::Create(g_pFbxSdkManager, IOSROOT);
-		g_pFbxSdkManager->SetIOSettings(pIOsettings);
-	}
-
-	FbxImporter* pImporter = FbxImporter::Create(g_pFbxSdkManager, "");
-	FbxScene* pFbxScene = FbxScene::Create(g_pFbxSdkManager, "");
-
-	bool bSuccess = pImporter->Initialize(file, -1, g_pFbxSdkManager->GetIOSettings());
-	if (!bSuccess) throw;
-
-	bSuccess = pImporter->Import(pFbxScene);
-	if (!bSuccess) throw;
-
-	pImporter->Destroy();
-
-	FbxNode* pFbxRootNode = pFbxScene->GetRootNode();
-
-	std::vector<Vertex> verts;           // Verts we're assembling
-	std::vector<UINT> indices;           // Indices of these verts
-	unsigned int vertCounter = 0;        // Count of vertices/indices
-
-	if (pFbxRootNode)
-	{
-		for (int i = 0; i < pFbxRootNode->GetChildCount(); i++)
-		{
-			FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);
-
-			if (pFbxChildNode->GetNodeAttribute() == NULL)
-				continue;
-
-			FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();
-
-
-			if (AttributeType != FbxNodeAttribute::eMesh)
-				continue;
-
-			FbxMesh* pMesh = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
-
-			FbxVector4* pVertices = pMesh->GetControlPoints();
-			int num = pMesh->GetPolygonCount();
-			for (int j = 0; j < pMesh->GetPolygonCount(); j++)
-			{
-				FbxVector4 norm;
-				int iNumVertices = pMesh->GetPolygonSize(j);
-				// Gets the normal at a given index
-				if (!pMesh->GetPolygonVertexNormal(j, 0, norm))
-					throw;
-				if (iNumVertices == 3)
-				{
-					// This is a triangle face
-					assert(iNumVertices == 3);
-					// 
-					Vertex v1;
-					Vertex v2;
-					Vertex v3;
-					int i = pMesh->GetPolygonVertex(j, 0);
-					v1.Position = XMFLOAT3(
-						(float)pVertices[i].mData[0],
-						(float)pVertices[i].mData[1],
-						(float)pVertices[i].mData[2]);
-					i = pMesh->GetPolygonVertex(j, 1);
-					v2.Position = XMFLOAT3(
-						(float)pVertices[i].mData[0],
-						(float)pVertices[i].mData[1],
-						(float)pVertices[i].mData[2]);
-					i = pMesh->GetPolygonVertex(j, 2);
-					v3.Position = XMFLOAT3(
-						(float)pVertices[i].mData[0],
-						(float)pVertices[i].mData[1],
-						(float)pVertices[i].mData[2]);
-					for (int k = 0; k < iNumVertices; k++) {
-						int iControlPointIndex = pMesh->GetPolygonVertex(j, k);
-
-						Vertex vertex;
-						vertex.Position = XMFLOAT3(
-							(float)pVertices[iControlPointIndex].mData[0],
-							(float)pVertices[iControlPointIndex].mData[1],
-							(float)pVertices[iControlPointIndex].mData[2]);
-						vertex.Position.z *= -1;
-						verts.push_back(vertex);
-						// Add index
-						indices.push_back(vertCounter); vertCounter += 1;
-					}
-				}
-				else if (iNumVertices == 4)
-				{
-					// This is a quare face
-					assert(iNumVertices == 4);
-					continue;
-				}
-				else 
-				{
-					// unhandled number of verts?
-					// Just do your best, champ
-					continue;
-				}
-
-			}
-
-		}
-
-	}
-}
+//Mesh::Mesh(const char* file, ID3D11Device* buffer, bool useFBX)
+//{
+//	// only use this one if useFBX is true
+//	// throw an exception because programmer is a dumb
+//	if (!useFBX)
+//	{
+//		throw;
+//	}
+//
+//	if (g_pFbxSdkManager == nullptr)
+//	{
+//		g_pFbxSdkManager = FbxManager::Create();
+//
+//		FbxIOSettings* pIOsettings = FbxIOSettings::Create(g_pFbxSdkManager, IOSROOT);
+//		g_pFbxSdkManager->SetIOSettings(pIOsettings);
+//	}
+//
+//	FbxImporter* pImporter = FbxImporter::Create(g_pFbxSdkManager, "");
+//	FbxScene* pFbxScene = FbxScene::Create(g_pFbxSdkManager, "");
+//
+//	bool bSuccess = pImporter->Initialize(file, -1, g_pFbxSdkManager->GetIOSettings());
+//	if (!bSuccess) throw;
+//
+//	bSuccess = pImporter->Import(pFbxScene);
+//	if (!bSuccess) throw;
+//
+//	pImporter->Destroy();
+//
+//	FbxNode* pFbxRootNode = pFbxScene->GetRootNode();
+//
+//	std::vector<MinimumVertex> verts;           // Verts we're assembling
+//	std::vector<UINT> indices;           // Indices of these verts
+//	unsigned int vertCounter = 0;        // Count of vertices/indices
+//	int triCounter = 0;
+//	int quadCounter = 0;
+//	int nGonCounter = 0;
+//
+//	if (pFbxRootNode)
+//	{
+//		int tempor = pFbxRootNode->GetChildCount();
+//		for (int i = 0; i < pFbxRootNode->GetChildCount(); i++)
+//		{
+//			FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);
+//
+//			if (pFbxChildNode->GetNodeAttribute() == NULL)
+//				continue;
+//
+//			FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();
+//
+//
+//			if (AttributeType != FbxNodeAttribute::eMesh)
+//				continue;
+//
+//			FbxMesh* pMesh = (FbxMesh*)pFbxChildNode->GetNodeAttribute();
+//
+//			FbxVector4* pVertices = pMesh->GetControlPoints();
+//			int num = pMesh->GetPolygonCount();
+//			pMesh->GetPolygonVertices();
+//			for (int j = 0; j < pMesh->GetPolygonCount(); j++)
+//			{
+//				FbxVector4 norm;
+//				int iNumVertices = pMesh->GetPolygonSize(j);
+//				// Gets the normal at a given index
+//				if (!pMesh->GetPolygonVertexNormal(j, 0, norm))
+//					throw;
+//				if (iNumVertices <= 4)
+//				{
+//					if (iNumVertices == 3)
+//					{
+//						// continue;
+//						triCounter++;
+//					}
+//					// 
+//					MinimumVertex v1;
+//					MinimumVertex v2;
+//					MinimumVertex v3;
+//					int i = pMesh->GetPolygonVertex(j, 0);
+//					v1.Position = XMFLOAT3(
+//						(float)pVertices[i].mData[0],
+//						(float)pVertices[i].mData[1],
+//						(float)pVertices[i].mData[2]);
+//					i = pMesh->GetPolygonVertex(j, 1);
+//					v2.Position = XMFLOAT3(
+//						(float)pVertices[i].mData[0],
+//						(float)pVertices[i].mData[1],
+//						(float)pVertices[i].mData[2]);
+//					i = pMesh->GetPolygonVertex(j, 2);
+//					v3.Position = XMFLOAT3(
+//						(float)pVertices[i].mData[0],
+//						(float)pVertices[i].mData[1],
+//						(float)pVertices[i].mData[2]);
+//					// Flip the Z (LH vs. RH
+//					v1.Position.z *= -1.0f;
+//					v2.Position.z *= -1.0f;
+//					v3.Position.z *= -1.0f;
+//
+//					verts.push_back(v1);
+//					verts.push_back(v3);
+//					verts.push_back(v2);
+//					// Add three more indices
+//					indices.push_back(vertCounter); vertCounter += 1;
+//					indices.push_back(vertCounter); vertCounter += 1;
+//					indices.push_back(vertCounter); vertCounter += 1;
+//
+//					if (iNumVertices == 4) // This is a square
+//					{
+//						quadCounter++;
+//						MinimumVertex v4;
+//						i = pMesh->GetPolygonVertex(j, 3);
+//						v4.Position = XMFLOAT3(
+//							(float)pVertices[i].mData[0],
+//							(float)pVertices[i].mData[1],
+//							(float)pVertices[i].mData[2]);
+//						v4.Position.z *= -1.0f;
+//						// Add a whole triangle (flipping the winding order)
+//						verts.push_back(v1);
+//						verts.push_back(v4);
+//						verts.push_back(v3);
+//
+//						// Add three more indices
+//						indices.push_back(vertCounter); vertCounter += 1;
+//						indices.push_back(vertCounter); vertCounter += 1;
+//						indices.push_back(vertCounter); vertCounter += 1;
+//					}
+//					//for (int k = 0; k < iNumVertices; k++) {
+//					//	int iControlPointIndex = pMesh->GetPolygonVertex(j, k);
+//
+//					//	MinimumVertex vertex;
+//					//	vertex.Position = XMFLOAT3(
+//					//		(float)pVertices[iControlPointIndex].mData[0],
+//					//		(float)pVertices[iControlPointIndex].mData[1],
+//					//		(float)pVertices[iControlPointIndex].mData[2]);
+//					//	vertex.Position.z *= -1;
+//					//	verts.push_back(vertex);
+//					//	// Add index
+//					//	indices.push_back(vertCounter); vertCounter += 1;
+//					//}
+//				}
+//				else 
+//				{
+//					// unhandled number of verts?
+//					// Just do your best, champ
+//					nGonCounter++;
+//					continue;
+//				}
+//
+//			}
+//
+//		}
+//
+//	}
+//	
+//	// Generate MINVertex buffer
+//
+//	// CalculateTangents(&verts[0], verts.size(), &indices[0], indices.size());
+//	// CalculateTangents(&verts[0], verts.size(), &indices[0], indices.size());
+//	CreateMinVertexBuffer(&verts[0], verts.size(), &indices[0], (int)indices.size(), buffer);
+//	// Keep verts around for bounding box generation
+//	// this->verts = verts;
+//}
 
 void Mesh::TinyOBJLoad(const char* file, ID3D11Device* buffer)
 {
@@ -425,6 +469,52 @@ void Mesh::CreateBuffer(Vertex vertices[], int vertexAmt, UINT _indices[], int i
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
 	vbd.ByteWidth = sizeof(Vertex) * vertexAmt;
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;	// Tells DirectX this is a vertex buffer
+	vbd.CPUAccessFlags = 0;
+	vbd.MiscFlags = 0;
+	vbd.StructureByteStride = 0;
+
+
+	// Create the proper struct to hold the initial vertex data
+	// - This is how we put the initial data into the buffer
+	D3D11_SUBRESOURCE_DATA initialVertexData;
+	initialVertexData.pSysMem = vertices;
+
+
+	// Actually create the buffer with the initial data
+	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
+	device->CreateBuffer(&vbd, &initialVertexData, vertexBuffer.GetAddressOf());
+
+	// Create Index BUffer
+	D3D11_BUFFER_DESC ibd;
+	ibd.Usage = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth = sizeof(int) * indexAmt;
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER; // Tells DirectX this is an index buffer
+	ibd.CPUAccessFlags = 0;
+	ibd.MiscFlags = 0;
+	ibd.StructureByteStride = 0;
+
+	// Create the proper struct to hold the initial index data
+	// - This is how we put the initial data into the buffer
+	D3D11_SUBRESOURCE_DATA initialIndexData;
+	initialIndexData.pSysMem = _indices;
+
+	// Actually create the buffer with the initial data
+	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
+	device->CreateBuffer(&ibd, &initialIndexData, indexBuffer.GetAddressOf());
+}
+
+void Mesh::CreateMinVertexBuffer(MinimumVertex vertices[], int vertexAmt, UINT _indices[], int indexAmt, ID3D11Device* device)
+{
+	// Save the amount of indices for future use
+	indices = indexAmt;
+
+	// Create the VERTEX BUFFER description -----------------------------------
+	// - The description is created on the stack because we only need
+	//    it to create the buffer.  The description is then useless.
+	D3D11_BUFFER_DESC vbd;
+	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth = sizeof(MinimumVertex) * vertexAmt;
 	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;	// Tells DirectX this is a vertex buffer
 	vbd.CPUAccessFlags = 0;
 	vbd.MiscFlags = 0;

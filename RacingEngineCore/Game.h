@@ -77,6 +77,8 @@ private:
 	SimplePixelShader* normalMapPS;
 	SimpleVertexShader* skyVS;
 	SimplePixelShader* skyPS;
+	SimpleVertexShader* bareVS;
+	SimplePixelShader* barePS;
 
 	SimplePixelShader* colorPS; 
 
@@ -87,6 +89,8 @@ private:
 	std::vector<Mesh*> meshes;
 	std::vector<Entity*> entities;
 	std::vector<Material*> materials;
+
+	Entity* debugEntity;
 
 	Camera* cam;
 	DirectionalLight mainLight;

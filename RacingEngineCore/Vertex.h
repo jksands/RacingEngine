@@ -15,3 +15,8 @@ struct Vertex
 	DirectX::XMFLOAT2 UV;			// for texture mapping
 
 };
+
+struct MinimumVertex
+{
+	DirectX::XMFLOAT3 Position;
+};

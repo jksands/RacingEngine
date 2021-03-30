@@ -37,8 +37,6 @@ protected:
 			// colliding array info
 	int collidingCount = 0;
 	Rigidbody* collidingArray = nullptr;
-	// transform info
-	Transform myTransform;
 	// movement stuff
 	DirectX::XMFLOAT3 accel = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 	DirectX::XMFLOAT3 pos = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -60,6 +58,9 @@ protected:
 
 	// public methods
 public:
+	// transform info
+	Transform myTransform;
+	DirectX::XMFLOAT4 tint = DirectX::XMFLOAT4(1, 1, 1, 0);
 	/*
 	* Constructor
 	* Params:
