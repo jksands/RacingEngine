@@ -11,7 +11,7 @@ using namespace DirectX;
 *	std::vector<XMFLOAT3> pointList: the points to make the rigidbody out of
 * Returns: an instance of the class
 */
-Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, bool _isDynamic)
+Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, bool _isDynamic, float friction)
 {
 	// if there are no vertices, return out
 	int vertexCount = vertices.size();
@@ -621,7 +621,7 @@ int Rigidbody::SAT(Rigidbody* incoming)
 void  Rigidbody::Update(float deltaTime, float totalTime)  
 {
 	accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	float tempFric;
+	float tempFric = 0.0f;
 
 	if (!isGrounded)
 	{
@@ -639,7 +639,7 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 		// accel.y = 0.0f;
 		// vel.y = 0.0f;
 		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		// accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 		tempFric = EntityManager::GetInstance()->GetRigidBodies()[1]->frictionCoeff;
 		tint = XMFLOAT4(1, 0, 0, 0);
 	}
