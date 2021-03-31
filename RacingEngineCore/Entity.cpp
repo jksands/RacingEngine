@@ -1,5 +1,6 @@
 #include "Entity.h"
 #include "BufferStructs.h"
+#include "Helpers.h"
 using namespace DirectX;
 Entity::Entity(Mesh* m, Material* mat, Transform t, bool physics, bool _isDynamic)
 {
@@ -10,7 +11,7 @@ Entity::Entity(Mesh* m, Material* mat, Transform t, bool physics, bool _isDynami
 	if (phyicsObject)
 	{
 		// Instantiate as Physics Object
-		rb = new Rigidbody(mesh->GetVertices(), transform, _isDynamic);
+		rb = new Rigidbody(mesh->GetVertices(), &transform, _isDynamic);
 		isDynamic = _isDynamic;
 
 	}
@@ -34,11 +35,53 @@ void Entity::Update(float deltaTime, float totalTime)
 		// ADD OVERLOAD TO TRANSFORM: AddOffset
 		XMFLOAT3 tPos = rb->GetParentalOffset();
 		// tPos = XMFLOAT3(0,0,0);
+
+		// applying rotation to offset
+		XMVECTOR tempOffset = XMLoadFloat3(&tPos);
+		XMFLOAT3 rotation = transform.GetPitchYawRoll();
+		XMVECTOR quat = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+		tempOffset = XMVector3Rotate(tempOffset, quat);
+		XMStoreFloat3(&tPos, tempOffset);
+
+
 		XMFLOAT3 cPos = rb->GetCenterGlobal();
 		// The rigidbody has moved, so we move the mesh to follow it
 		transform.SetPosition(cPos.x + tPos.x, cPos.y+ tPos.y, cPos.z + tPos.z);
+		ResolveInputs(deltaTime);
 	}
 }
+
+#pragma region ResolveInputs
+// gathers inputs and applies the appripriate force
+void Entity::ResolveInputs(float deltaTime)
+{
+	// if w, apply force on forward axis
+	if (GetAsyncKeyState('W') & 0x8000)
+	{
+		rb->HandleDrive(1);
+	}
+
+	// if S, apply force on (-1)forward axis
+	if (GetAsyncKeyState('S') & 0x8000)
+	{
+		rb->HandleDrive(-1);
+	}
+
+	// if a, negative rotation on the Y axis
+	if (GetAsyncKeyState('A') & 0x8000)
+	{
+		// negative rotation on Y axis by the turn radius
+		transform.Rotate(0.0f, (-5 * deltaTime), 0.0f);
+	}
+
+	// if d, positive rotation on the Y axis
+	if (GetAsyncKeyState('D') & 0x8000)
+	{
+		// positive rotation on Y axis by the turn radius
+		transform.Rotate(0.0f, (5 * deltaTime), 0.0f);
+	}
+}
+#pragma endregion
 
 void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char type)
 {

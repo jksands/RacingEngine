@@ -1,6 +1,7 @@
 #include "Rigidbody.h"
 #include "Transform.h"
 #include "EntityManager.h"
+#include "Helpers.h"
 using namespace DirectX;
 // constructor & big 3
 
@@ -11,7 +12,7 @@ using namespace DirectX;
 *	std::vector<XMFLOAT3> pointList: the points to make the rigidbody out of
 * Returns: an instance of the class
 */
-Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, bool _isDynamic, float friction)
+Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform* incomingTransform, bool _isDynamic, float friction)
 {
 	// if there are no vertices, return out
 	int vertexCount = vertices.size();
@@ -56,11 +57,11 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, 
 
 	// getting transform and setting local to global matrix
 	myTransform = incomingTransform;
-	localToGlobalMat = myTransform.GetWorldMatrix();
+	localToGlobalMat = myTransform->GetWorldMatrix();
 
 	// half width is dist between min and max over 2
 	halfWidthOBB = DivFloat3(SubFloat3(maxLocal, minLocal), 2.0f);
-	XMFLOAT3 tempScale = myTransform.GetScale();
+	XMFLOAT3 tempScale = myTransform->GetScale();
 	halfWidthOBB = XMFLOAT3(halfWidthOBB.x * tempScale.x, halfWidthOBB.y * tempScale.y, halfWidthOBB.z * tempScale.z);
 	radius = MagFloat3(halfWidthOBB);
 
@@ -87,7 +88,7 @@ Rigidbody::Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, 
 	// centerGlobal = GetCenterGlobal();
 
 	// After calculating center global, get the offset between US and the parent center
-	offset = SubFloat3(myTransform.GetPosition(), centerGlobal);
+	offset = SubFloat3(myTransform->GetPosition(), centerGlobal);
 
 	isDynamic = _isDynamic;
 }
@@ -266,6 +267,7 @@ DirectX::XMFLOAT3 Rigidbody::GetParentalOffset()
 // other methods
 
 /*
+/*
 * Clear the colliding list
 * Params:
 *	None
@@ -434,7 +436,7 @@ int Rigidbody::SAT(Rigidbody* incoming)
 		// XMVector3Transform(yAxis, myWorldMat),
 		// XMVector3Transform(zAxis, myWorldMat)
 	};
-	XMFLOAT3 rotation = incoming->myTransform.GetPitchYawRoll();
+	XMFLOAT3 rotation = incoming->myTransform->GetPitchYawRoll();
 	XMVECTOR quat = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 	XMVECTOR yourAxes[] = {
 		XMVector3Rotate(xAxis, quat),
@@ -637,7 +639,6 @@ int Rigidbody::SAT(Rigidbody* incoming)
 //  ISSUE: WORLD MATRIX DOES NOT UPDATE, MAKING THIS RELATIVE TO CENTER GLOBAAL WOULD BE POGGERS
 void  Rigidbody::Update(float deltaTime, float totalTime)  
 {
-	accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	float tempFric = 0.0f;
 
 	if (!isGrounded)
@@ -645,9 +646,6 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 		// apply gravity
 		ApplyGrav(grav);
 	}
-
-	// WASD
-	ResolveInputs();
 
 	// Applying a normal force from the collision to stop the object
 	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS
@@ -669,6 +667,8 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	// add accel to vel
 	vel = AddFloat3(vel, accel);
 
+	vel = MultFloat3(vel, deltaTime);
+
 	// apply friction
 	if (tempFric > 0.0f)
 	{
@@ -679,102 +679,36 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 		ApplyFriction();
 	}
 
-	// I don't think I need this because I do the same exact thing in ApplyFriction
-	// if vel is tiny, set to 0
-	/*if (MagFloat3(vel) < 0.0001f)
-	{
-		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	}*/
-
 	// add vel to pos
 	pos = AddFloat3(pos, vel);
-	myTransform.MoveRelative(vel.x, vel.y, vel.z);
+	myTransform->MoveRelative(vel.x, vel.y, vel.z);
 
 	// updating local to global
-	localToGlobalMat = myTransform.GetWorldMatrix();
+	localToGlobalMat = myTransform->GetWorldMatrix();
 
 
 	// min and max global
 	minGlobal = GetMinGlobal();
 	maxGlobal = GetMaxGlobal();
 
+
+	accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 }
 
-#pragma endregion
-
-
-#pragma region Helpers
-// helpers
-
-#pragma region XMFLOAT3 Maths
-// Adding to XMFLOAT3's
-XMFLOAT3 Rigidbody::AddFloat3(XMFLOAT3 a, XMFLOAT3 b)
+void Rigidbody::HandleDrive(int dir)
 {
-	XMFLOAT3 temp;
-	temp.x = a.x + b.x;
-	temp.y = a.y + b.y;
-	temp.z = a.z + b.z;
-	return temp;
-}
-// Subtracting 2 XMFLOAT3's
-XMFLOAT3 Rigidbody::SubFloat3(XMFLOAT3 a, XMFLOAT3 b)
-{
-	XMFLOAT3 temp;
-	temp.x = a.x - b.x;
-	temp.y = a.y - b.y;
-	temp.z = a.z - b.z;
-	return temp;
-}
-// Divides a XMFLOAT3 by a scalar
-XMFLOAT3 Rigidbody::DivFloat3(XMFLOAT3 float3, float scalar)
-{
-	XMFLOAT3 temp;
-	temp.x = float3.x / scalar;
-	temp.y = float3.y / scalar;
-	temp.z = float3.z / scalar;
-	return temp;
-}
-/// <summary>
-/// 
-/// </summary>
-/// <param name="a"></param>
-/// <param name="b"></param>
-/// <returns></returns>
-XMFLOAT3 Rigidbody::MultFloat3(XMFLOAT3 float3, float scalar)
-{
-	XMFLOAT3 temp;
-	temp.x = float3.x * scalar;
-	temp.y = float3.y * scalar;
-	temp.z = float3.z * scalar;
-	return temp;
-}
-float Rigidbody::MagFloat3(XMFLOAT3 float3)
-{
-	// a^2 + b^2 + c^2 = d^2
-	// d = sqrt(a^2 + b^2 + c^2)
-	return abs(sqrtf(powf(float3.x, 2.0f) + powf(float3.y, 2.0f) + powf(float3.z, 2.0f)));
-}
-#pragma endregion
-
-#pragma region ResolveInputs
-// gathers inputs and applies the appripriate force
-void Rigidbody::ResolveInputs()
-{
-	// if w, apply force on forward axis
-	if (GetAsyncKeyState('W') & 0x8000) 
-	{ 
+	if (dir == 1)
+	{
 		// use the local z axis
 		XMFLOAT3 tempForce = XMFLOAT3(0.0f, 0.0f, 1.0f);
 
 		// multiply the force by the speed
 		tempForce = MultFloat3(tempForce, speed);
 
-		//apply the force
-		ApplyForce(tempForce); 
+		// apply the force
+		ApplyForce(tempForce);
 	}
-
-	// if S, apply force on (-1)forward axis
-	if (GetAsyncKeyState('S') & 0x8000)
+	else if (dir == -1)
 	{
 		// use the local z axis
 		XMFLOAT3 tempForce = XMFLOAT3(0.0f, 0.0f, -1.0f);
@@ -785,21 +719,6 @@ void Rigidbody::ResolveInputs()
 		//apply the force
 		ApplyForce(tempForce);
 	}
-
-	// if a, negative rotation on the Y axis
-	if (GetAsyncKeyState('A') & 0x8000)
-	{
-		// negative rotation on Y axis by the turn radius
-		myTransform.Rotate(0.0f, -turnRadius, 0.0f);
-	}
-
-	// if d, positive rotation on the Y axis
-	if (GetAsyncKeyState('D') & 0x8000)
-	{
-		// positive rotation on Y axis by the turn radius
-		myTransform.Rotate(0.0f, turnRadius, 0.0f);
-	}
 }
-#pragma endregion
 
 #pragma endregion

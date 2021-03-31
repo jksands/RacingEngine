@@ -14,6 +14,7 @@ public:
 	Mesh* GetMesh();
 	Transform* GetTransform();
 	void Update(float deltaTime, float totalTime);
+	void ResolveInputs(float deltaTime);
 	// For time being, Entities handle their own Draw.  May be updated in the future with an addition of a renderer
 	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char c = ' ');
 	void DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps);

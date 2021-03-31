@@ -43,11 +43,11 @@ protected:
 	DirectX::XMVECTOR rotQuat;
 	DirectX::XMFLOAT3 size = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
 	DirectX::XMFLOAT3 vel = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f);
-	float mass = 2.0f;
+	float mass = 1.0f;
 
 	// gravity
-	float grav = 0.0005f;
-	float speed = 0.005f;
+	float grav = 4.0f;
+	float speed = 7.5f;
 	float turnRadius = 0.5f;
 	float frictionCoeff = 0.0f;
 
@@ -63,7 +63,7 @@ protected:
 	// public methods
 public:
 	// transform info
-	Transform myTransform;
+	Transform* myTransform;
 	DirectX::XMFLOAT4 tint = DirectX::XMFLOAT4(1, 1, 1, 0);
 	/*
 	* Constructor
@@ -71,7 +71,7 @@ public:
 	*	std::vector<DirectX::XMFLOAT3> pointList: the points to make the rigidbody out of
 	* Returns: an instance of the class
 	*/
-	Rigidbody(std::vector<Vertex> vertices, Transform incomingTransform, bool _isDynamic = true, float friction = 0.0f);
+	Rigidbody(std::vector<Vertex> vertices, Transform* incomingTransform, bool _isDynamic = true, float friction = 0.0f);
 	/*
 	* Copy Constructor
 	* Params:
@@ -153,43 +153,7 @@ public:
 	* OUTPUT: NONE
 	*/
 	void Update(float deltaTime, float totalTime);
-	/*
-	* adds the two DirectX::XMFLOAT3 components and return an DirectX::XMFLOAT3
-	* Arguments:
-	*	two DirectX::XMFLOAT3's to add
-	* Returns: added DirectX::XMFLOAT3
-	*/
-	DirectX::XMFLOAT3 AddFloat3(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b);
-
-	/*
-	* subtracts the two DirectX::XMFLOAT3 components and return an DirectX::XMFLOAT3
-	* Arguments:
-	*	two DirectX::XMFLOAT3's to subtract, in the order the would be subtracted (a - b)
-	* Returns: subtracted DirectX::XMFLOAT3
-	*/
-	DirectX::XMFLOAT3 SubFloat3(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b);
-	/*
-	* divides an DirectX::XMFLOAT3 by a scalar
-	* Arguments:
-	*	the DirectX::XMFLOAT3 to divide and the float scalar to divide the DirectX::XMFLOAT3 by
-	* Returns: divided DirectX::XMFLOAT3
-	*/
-	DirectX::XMFLOAT3 DivFloat3(DirectX::XMFLOAT3 float3, float scalar);
-	/*
-	* multiplies an DirectX::XMFLOAT3 by a scalar
-	* Arguments:
-	*	the DirectX::XMFLOAT3 to multiply and the float scalar to multiply the DirectX::XMFLOAT3 by
-	* Returns: multiplied  DirectX::XMFLOAT3
-	*/
-	DirectX::XMFLOAT3 MultFloat3(DirectX::XMFLOAT3 float3, float scalar);
-	/*
-	* finds the magnitude of a DirectX::XMFLOAT3
-	* Arguments:
-	*	DirectX::XMFLOAT3 to find the magnitude of
-	* Returns: magnitude of DirectX::XMFLOAT3
-	*/
-	float MagFloat3(DirectX::XMFLOAT3 float3);
-
+	
 	/*
 	* Uses ARBB collision detections to return if this is colliding with another giidbody
 	* params: incoing rigidbody
@@ -197,8 +161,8 @@ public:
 	*/
 	bool ARBBCheck(Rigidbody* incoming);
 
-	// Detecting and resolving inputs
-	void ResolveInputs();
+	// handles driving with int telling us whic direction the car should be going (which way the force is going)
+	void HandleDrive(int dir);
 
 #pragma region GettersAndSetters
 	// bounding spehere visibility
