@@ -422,6 +422,7 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	XMVECTOR yAxis = XMLoadFloat4(&yAxisFloat);
 	XMVECTOR zAxis = XMLoadFloat4(&zAxisFloat);
 	
+	// myTransform->Rotate(0.0f, 10.0f, 0.0f);
 	XMMATRIX myWorldMat = XMLoadFloat4x4(&myTransform->GetWorldMatrix());
 	XMMATRIX yourWorldMat = XMLoadFloat4x4(&incoming->myTransform->GetWorldMatrix());
 	// XMStoreFloat3(&centerGlobal, XMVector3Transform(p, mat));
@@ -430,9 +431,12 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	XMVECTOR aQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
 	// get all the axes for each object
 	XMVECTOR myAxes[] = {
-		XMVector3Normalize(XMVector3Transform(xAxis, myWorldMat)),
-		XMVector3Normalize(XMVector3Transform(yAxis, myWorldMat)),
-		XMVector3Normalize(XMVector3Transform(zAxis, myWorldMat))
+		XMVector3Rotate(xAxis, aQuat),
+		XMVector3Rotate(yAxis, aQuat),
+		XMVector3Rotate(zAxis, aQuat)
+		// XMVector3Normalize(XMVector3Transform(xAxis, myWorldMat)),
+		// XMVector3Normalize(XMVector3Transform(yAxis, myWorldMat)),
+		// XMVector3Normalize(XMVector3Transform(zAxis, myWorldMat))
 		// XMVector3Transform(xAxis, myWorldMat),
 		// XMVector3Transform(yAxis, myWorldMat),
 		// XMVector3Transform(zAxis, myWorldMat)
@@ -473,7 +477,7 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	float tY = XMVectorGetY(XMVector3Dot(transVec, myAxes[1]));
 	float tZ = XMVectorGetZ(XMVector3Dot(transVec, myAxes[2]));
 	XMFLOAT3 tempF3 = XMFLOAT3(tX, tY, tZ);
-	// transVec = XMLoadFloat3(&tempF3);
+	transVec = XMLoadFloat3(&tempF3);
 
 	// i think i need absR bc parrallell makes math sadger
 	for (int i = 0; i < 3; i++)
@@ -488,7 +492,7 @@ int Rigidbody::SAT(Rigidbody* incoming)
 
 	XMFLOAT3 hw = incoming->GetHalfWidth();
 	XMFLOAT3 rotVec;
-	XMStoreFloat3(&rotVec, XMVector3Rotate(XMLoadFloat3(&hw), quat));
+	XMStoreFloat3(&rotVec, XMVector3Rotate(XMLoadFloat3(&hw), aQuat));
 	// L = A0, l + A1, L = A2
 	for (int i = 0; i < 3; i++)
 	{
@@ -516,10 +520,10 @@ int Rigidbody::SAT(Rigidbody* incoming)
 		float a = hw.x * absRotMax.m[i][0];
 		float b = hw.y * absRotMax.m[i][1];
 		float c = hw.z * absRotMax.m[i][2];
-		/*yourRadius = 
+		yourRadius = 
 			a + 
 			b + 
-			c;*/
+			c;
 
 		if (abs(temp) > myRadius + yourRadius)
 		{
@@ -528,7 +532,7 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	}
 
 	hw = GetHalfWidth();
-	XMStoreFloat3(&rotVec, XMVector3Rotate(XMLoadFloat3(&hw), aQuat));
+	XMStoreFloat3(&rotVec, XMVector3Rotate(XMLoadFloat3(&hw), quat));
 
 	// L = B0, L = B1, L = B2
 	for (int i = 0; i < 3; i++)
@@ -558,12 +562,12 @@ int Rigidbody::SAT(Rigidbody* incoming)
 
 		// myRadius = GetHalfWidth().x * absRotMax.m[0][i] + GetHalfWidth().y * absRotMax.m[1][i] + GetHalfWidth().z * absRotMax.m[2][i];
 
-		// if (abs(
-		// 	XMVectorGetX(transVec) * rotationMatrix.m[i][0] + 
-		// 	XMVectorGetY(transVec) * rotationMatrix.m[i][1] + 
-		// 	XMVectorGetZ(transVec) * rotationMatrix.m[i][2]) 
-		// 		> myRadius + yourRadius)
-		if (abs(temp) > myRadius + yourRadius)
+		 if (abs(
+		 	XMVectorGetX(transVec) * rotationMatrix.m[i][0] + 
+		 	XMVectorGetY(transVec) * rotationMatrix.m[i][1] + 
+		 	XMVectorGetZ(transVec) * rotationMatrix.m[i][2]) 
+		 		> myRadius + yourRadius)
+		// if (abs(temp) > myRadius + yourRadius)
 		{
 			return 1;
 		}
@@ -571,76 +575,76 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	XMFLOAT3 myRad = GetHalfWidth();
 	XMFLOAT3 yourRad = incoming->GetHalfWidth();
 	 // L = A0 x B0 
-	//myRadius = GetHalfWidth().y * absRotMax.m[2][0] + GetHalfWidth().z * absRotMax.m[1][0];
-	//yourRadius = incoming->GetHalfWidth().y * absRotMax.m[0][2] + incoming->GetHalfWidth().z * absRotMax.m[0][1];
-	//if (abs(XMVectorGetZ(transVec) * rotationMatrix.m[1][0] - XMVectorGetY(transVec) * rotationMatrix.m[2][0]) > myRadius + yourRadius)
-	//{
-	//	return 1;
-	//}
+	myRadius = GetHalfWidth().y * absRotMax.m[2][0] + GetHalfWidth().z * absRotMax.m[1][0];
+	yourRadius = incoming->GetHalfWidth().y * absRotMax.m[0][2] + incoming->GetHalfWidth().z * absRotMax.m[0][1];
+	if (abs(XMVectorGetZ(transVec) * rotationMatrix.m[1][0] - XMVectorGetY(transVec) * rotationMatrix.m[2][0]) > myRadius + yourRadius)
+	{
+		return 1;
+	}
 
-	//// L = A0 x B1
-	//myRadius = GetHalfWidth().y * absRotMax.m[2][1] + GetHalfWidth().z * absRotMax.m[1][1];
-	//yourRadius = incoming->GetHalfWidth().x * absRotMax.m[0][2] + incoming->GetHalfWidth().z * absRotMax.m[0][0];
-	//if (abs(XMVectorGetZ(transVec) * rotationMatrix.m[1][1] - XMVectorGetY(transVec) * rotationMatrix.m[2][1]) > myRadius + yourRadius)
-	//{
-	//	return 1;
-	//}
+	// L = A0 x B1
+	myRadius = GetHalfWidth().y * absRotMax.m[2][1] + GetHalfWidth().z * absRotMax.m[1][1];
+	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[0][2] + incoming->GetHalfWidth().z * absRotMax.m[0][0];
+	if (abs(XMVectorGetZ(transVec) * rotationMatrix.m[1][1] - XMVectorGetY(transVec) * rotationMatrix.m[2][1]) > myRadius + yourRadius)
+	{
+		return 1;
+	}
 
-	//// Test axis L = A0 x B2
-	//myRadius = GetHalfWidth().y * absRotMax.m[2][2] + GetHalfWidth().z * absRotMax.m[1][2];
-	//yourRadius = incoming->GetHalfWidth().x * absRotMax.m[0][1] + incoming->GetHalfWidth().y * absRotMax.m[0][0];
-	//if (abs(XMVectorGetZ(transVec) * rotationMatrix.m[1][2] - XMVectorGetY(transVec) * rotationMatrix.m[2][2]) > myRadius + yourRadius)
-	//{
-	//	return 1;
-	//}
+	// Test axis L = A0 x B2
+	myRadius = GetHalfWidth().y * absRotMax.m[2][2] + GetHalfWidth().z * absRotMax.m[1][2];
+	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[0][1] + incoming->GetHalfWidth().y * absRotMax.m[0][0];
+	if (abs(XMVectorGetZ(transVec) * rotationMatrix.m[1][2] - XMVectorGetY(transVec) * rotationMatrix.m[2][2]) > myRadius + yourRadius)
+	{
+		return 1;
+	}
 
-	//// Test axis L = A1 x B0
-	//myRadius = GetHalfWidth().x * absRotMax.m[2][0] + GetHalfWidth().z * absRotMax.m[0][0];
-	//yourRadius = incoming->GetHalfWidth().y * absRotMax.m[1][2] + incoming->GetHalfWidth().z * absRotMax.m[1][1];
-	//if (abs(XMVectorGetX(transVec) * rotationMatrix.m[2][0] - XMVectorGetZ(transVec) * rotationMatrix.m[0][0]) > myRadius + yourRadius)
-	//{
-	//	return 1;
-	//}
+	// Test axis L = A1 x B0
+	myRadius = GetHalfWidth().x * absRotMax.m[2][0] + GetHalfWidth().z * absRotMax.m[0][0];
+	yourRadius = incoming->GetHalfWidth().y * absRotMax.m[1][2] + incoming->GetHalfWidth().z * absRotMax.m[1][1];
+	if (abs(XMVectorGetX(transVec) * rotationMatrix.m[2][0] - XMVectorGetZ(transVec) * rotationMatrix.m[0][0]) > myRadius + yourRadius)
+	{
+		return 1;
+	}
 
-	//// Test axis L = A1 x B1
-	//myRadius = GetHalfWidth().x * absRotMax.m[2][1] + GetHalfWidth().z * absRotMax.m[0][1];
-	//yourRadius = incoming->GetHalfWidth().x * absRotMax.m[1][2] + incoming->GetHalfWidth().z * absRotMax.m[1][0];
-	//if (abs(XMVectorGetX(transVec) * rotationMatrix.m[2][1] - XMVectorGetZ(transVec) * rotationMatrix.m[0][1]) > myRadius + yourRadius)
-	//{
-	//	return 1;
-	//}
+	// Test axis L = A1 x B1
+	myRadius = GetHalfWidth().x * absRotMax.m[2][1] + GetHalfWidth().z * absRotMax.m[0][1];
+	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[1][2] + incoming->GetHalfWidth().z * absRotMax.m[1][0];
+	if (abs(XMVectorGetX(transVec) * rotationMatrix.m[2][1] - XMVectorGetZ(transVec) * rotationMatrix.m[0][1]) > myRadius + yourRadius)
+	{
+		return 1;
+	}
 
-	//// Test axis L = A1 x B2
-	//myRadius = GetHalfWidth().x * absRotMax.m[2][2] + GetHalfWidth().z * absRotMax.m[0][2];
-	//yourRadius = incoming->GetHalfWidth().x * absRotMax.m[1][1] + incoming->GetHalfWidth().y * absRotMax.m[1][0];
-	//if (abs(XMVectorGetX(transVec) * rotationMatrix.m[2][2] - XMVectorGetZ(transVec) * rotationMatrix.m[0][2]) > myRadius + yourRadius)
-	//{
-	//	return 1;
-	//}
+	// Test axis L = A1 x B2
+	myRadius = GetHalfWidth().x * absRotMax.m[2][2] + GetHalfWidth().z * absRotMax.m[0][2];
+	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[1][1] + incoming->GetHalfWidth().y * absRotMax.m[1][0];
+	if (abs(XMVectorGetX(transVec) * rotationMatrix.m[2][2] - XMVectorGetZ(transVec) * rotationMatrix.m[0][2]) > myRadius + yourRadius)
+	{
+		return 1;
+	}
 
-	//// Test axis L = A2 x B0
-	//myRadius = GetHalfWidth().x * absRotMax.m[1][0] + GetHalfWidth().y * absRotMax.m[0][0];
-	//yourRadius = incoming->GetHalfWidth().y * absRotMax.m[2][2] + incoming->GetHalfWidth().z * absRotMax.m[2][1];
-	//if (abs(XMVectorGetY(transVec) * rotationMatrix.m[0][0] - XMVectorGetX(transVec) * rotationMatrix.m[1][0]) > myRadius + yourRadius)
-	//{
-	//	return 1;
-	//}
+	// Test axis L = A2 x B0
+	myRadius = GetHalfWidth().x * absRotMax.m[1][0] + GetHalfWidth().y * absRotMax.m[0][0];
+	yourRadius = incoming->GetHalfWidth().y * absRotMax.m[2][2] + incoming->GetHalfWidth().z * absRotMax.m[2][1];
+	if (abs(XMVectorGetY(transVec) * rotationMatrix.m[0][0] - XMVectorGetX(transVec) * rotationMatrix.m[1][0]) > myRadius + yourRadius)
+	{
+		return 1;
+	}
 
-	//// Test axis L = A2 x B1
-	//myRadius = GetHalfWidth().x * absRotMax.m[1][1] + GetHalfWidth().y * absRotMax.m[0][1];
-	//yourRadius = incoming->GetHalfWidth().x * absRotMax.m[2][2] + incoming->GetHalfWidth().z * absRotMax.m[2][0];
-	//if (abs(XMVectorGetY(transVec) * rotationMatrix.m[0][1] - XMVectorGetX(transVec) * rotationMatrix.m[1][1]) > myRadius + yourRadius)
-	//{
-	//	return 1;
-	//}
+	// Test axis L = A2 x B1
+	myRadius = GetHalfWidth().x * absRotMax.m[1][1] + GetHalfWidth().y * absRotMax.m[0][1];
+	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[2][2] + incoming->GetHalfWidth().z * absRotMax.m[2][0];
+	if (abs(XMVectorGetY(transVec) * rotationMatrix.m[0][1] - XMVectorGetX(transVec) * rotationMatrix.m[1][1]) > myRadius + yourRadius)
+	{
+		return 1;
+	}
 
-	//// Test axis L = A2 x B2
-	//myRadius = GetHalfWidth().x * absRotMax.m[1][2] + GetHalfWidth().y * absRotMax.m[0][2];
-	//yourRadius = incoming->GetHalfWidth().x * absRotMax.m[2][1] + incoming->GetHalfWidth().y * absRotMax.m[2][0];
-	//if (abs(XMVectorGetY(transVec) * rotationMatrix.m[0][2] - XMVectorGetX(transVec) * rotationMatrix.m[1][2]) > myRadius + yourRadius)
-	//{
-	//	return 1;
-	//}
+	// Test axis L = A2 x B2
+	myRadius = GetHalfWidth().x * absRotMax.m[1][2] + GetHalfWidth().y * absRotMax.m[0][2];
+	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[2][1] + incoming->GetHalfWidth().y * absRotMax.m[2][0];
+	if (abs(XMVectorGetY(transVec) * rotationMatrix.m[0][2] - XMVectorGetX(transVec) * rotationMatrix.m[1][2]) > myRadius + yourRadius)
+	{
+		return 1;
+	}
 
 	// Since no separating axis is found, the OBBs must be intersecting
 	return 0;
@@ -713,7 +717,7 @@ void Rigidbody::HandleDrive(int dir)
 	if (dir == 1)
 	{
 		// use the local z axis
-		XMFLOAT3 tempForce = XMFLOAT3(0.0f, 0.0f, 1.0f);
+		XMFLOAT3 tempForce = XMFLOAT3(0.0f, 0.0f, -1.0f);
 
 		// multiply the force by the speed
 		tempForce = MultFloat3(tempForce, speed);
@@ -724,7 +728,7 @@ void Rigidbody::HandleDrive(int dir)
 	else if (dir == -1)
 	{
 		// use the local z axis
-		XMFLOAT3 tempForce = XMFLOAT3(0.0f, 0.0f, -1.0f);
+		XMFLOAT3 tempForce = XMFLOAT3(0.0f, 0.0f, 1.0f);
 
 		// multiply the force by the speed
 		tempForce = MultFloat3(tempForce, speed);

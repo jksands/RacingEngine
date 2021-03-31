@@ -230,9 +230,10 @@ void Game::LoadMeshes()
 void Game::CreateEntities()
 {
 	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));E
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[3], Transform(XMFLOAT3(0, 1.0f, 0), XMFLOAT3(.05f, .05f, .05f)), true));
+	Transform t = Transform(XMFLOAT3(0, 1.0f, 0), XMFLOAT3(.05f, .05f, .05f), XMFLOAT3(0.0f, 0.0f, 0.0f));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[3], t, true));
 	// floor
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(0.0f, -5.0f, 15.0f), XMFLOAT3(50.0f, 2.0f, 50.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-0.0f, -5.0f, -0.0f), XMFLOAT3(100.0f, 2.0f, 100.0f)), true, false));
 
 	// FBX model
 	// EntityManager::GetInstance()->AddEntity(new Entity(meshes[4], materials[5], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.1f, .1f, .1f))));
@@ -420,7 +421,7 @@ void Game::Draw(float deltaTime, float totalTime)
 			// To draw different types of colliders based on
 			// data passed in
 			entities[i]->DrawCollider(context, cam, meshes[2], vertexShader, colorPS);
-			entities[i]->DrawDebugObject(context, cam, meshes[0], vertexShader, colorPS);
+			// entities[i]->DrawDebugObject(context, cam, meshes[0], vertexShader, colorPS);
 
 
 		}
