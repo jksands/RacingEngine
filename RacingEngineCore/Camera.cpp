@@ -37,10 +37,10 @@ void Camera::Update(float dt, HWND windowHandle)
 {
 	float moveSpeed = 1.0f;
 	if (GetAsyncKeyState(VK_LSHIFT) & 0x8000) moveSpeed = 4.0f;
-	if (GetAsyncKeyState('W') & 0x8000) { transform.MoveRelative(0, 0, movementSpeed * dt * moveSpeed); }
-	if (GetAsyncKeyState('S') & 0x8000) { transform.MoveRelative(0, 0, -movementSpeed * dt * moveSpeed); }
-	if (GetAsyncKeyState('A') & 0x8000) { transform.MoveRelative(-movementSpeed * dt * moveSpeed, 0, 0); }
-	if (GetAsyncKeyState('D') & 0x8000) { transform.MoveRelative(movementSpeed * dt * moveSpeed, 0, 0); }
+	if (GetAsyncKeyState(VK_UP) & 0x8000) { transform.MoveRelative(0, 0, movementSpeed * dt * moveSpeed); }
+	if (GetAsyncKeyState(VK_DOWN) & 0x8000) { transform.MoveRelative(0, 0, -movementSpeed * dt * moveSpeed); }
+	if (GetAsyncKeyState(VK_LEFT) & 0x8000) { transform.MoveRelative(-movementSpeed * dt * moveSpeed, 0, 0); }
+	if (GetAsyncKeyState(VK_RIGHT) & 0x8000) { transform.MoveRelative(movementSpeed * dt * moveSpeed, 0, 0); }
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000) { transform.MoveAbsolute(0, movementSpeed * dt * moveSpeed, 0); }
 	if (GetAsyncKeyState('X') & 0x8000) { transform.MoveAbsolute(0, -movementSpeed * dt * moveSpeed, 0); }
 	POINT mousePos = {};
