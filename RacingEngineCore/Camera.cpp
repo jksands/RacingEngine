@@ -53,7 +53,7 @@ void Camera::Update(float dt, HWND windowHandle)
 		float deltaX = (mousePos.x - prevMouse.x) * dt * lookSpeed;
 		float deltaY = (mousePos.y - prevMouse.y) * dt * lookSpeed;
 
-		transform.Rotate(deltaY, deltaX, 0);
+		// transform.Rotate(deltaY, deltaX, 0);
 
 	}
 	prevMouse = mousePos;
