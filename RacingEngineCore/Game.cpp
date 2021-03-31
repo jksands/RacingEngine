@@ -69,6 +69,7 @@ Game::~Game()
 	delete skyboxEntity;
 	delete debugEntity;
 	delete colorPS;
+	delete PBRPS;
 	delete EntityManager::GetInstance();
 }
 
@@ -165,6 +166,9 @@ void Game::LoadShaders()
 
 	barePS = new SimplePixelShader(device, context);
 	barePS->LoadShaderFile(L"BarePS.cso");
+
+	PBRPS = new SimplePixelShader(device, context);
+	PBRPS->LoadShaderFile(L"PBRPS.cso");
 }
 
 void Game::LoadTextures()
@@ -190,6 +194,13 @@ void Game::LoadTextures()
 		nullptr,
 		&metal
 	);
+	CreateWICTextureFromFile(
+		device,
+		context,
+		L"../../Assets/Textures/car.jpg",
+		nullptr,
+		&carTex
+	);
 }
 
 void Game::CreateSampler()
@@ -214,6 +225,7 @@ void Game::LoadMaterials()
 	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f));
 	materials.push_back(new Material(colorPS, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f));
 	materials.push_back(new Material(barePS, bareVS, XMFLOAT4(1, 1, 1, 0), 0.1f));
+	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f, carTex, sampler));
 }
 
 // Loads a mesh from a file - Can create a mesh yourself should you desire
@@ -230,8 +242,11 @@ void Game::LoadMeshes()
 void Game::CreateEntities()
 {
 	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));E
-	Transform t = Transform(XMFLOAT3(0, 1.0f, 0), XMFLOAT3(.05f, .05f, .05f), XMFLOAT3(0.0f, 0.0f, 0.0f));
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[3], t, true));
+	Transform t = new Transform(XMFLOAT3(0, 1.0f, 0), XMFLOAT3(.05f, .05f, .05f), XMFLOAT3(0.0f, 0.0f, 0.0f));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[6], t, true));
+	// Entity* e = EntityManager::GetInstance()->GetEntities()[0];
+	cam->FollowObject(XMFLOAT3(0, 1, -3));
+	
 	// floor
 	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-0.0f, -5.0f, -0.0f), XMFLOAT3(100.0f, 2.0f, 100.0f)), true, false));
 

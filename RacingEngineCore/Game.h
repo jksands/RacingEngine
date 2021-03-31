@@ -82,6 +82,8 @@ private:
 
 	SimplePixelShader* colorPS; 
 
+	SimplePixelShader* PBRPS;
+
 	// Keeps track of the old mouse position.  Useful for 
 	// determining how far the mouse moved in a single frame.
 	POINT prevMousePos;
@@ -99,6 +101,7 @@ private:
 	ID3D11ShaderResourceView* rocks;
 	ID3D11ShaderResourceView* rocksNM;
 	ID3D11ShaderResourceView* metal;
+	ID3D11ShaderResourceView* carTex;
 
 };
 

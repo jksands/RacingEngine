@@ -18,14 +18,18 @@ private:
 	float farClipDist;
 	float movementSpeed;
 	float lookSpeed;
+	// Entity* otherObject;
+	bool following;
 
 public:
 	Camera(DirectX::XMFLOAT3 pos, float aspect, float moveSpeed, float lookSpeed);
 	void UpdateProjectionMatrix(float aspectRatio);
 	void UpdateViewMatrix();
+	void LookAt(DirectX::XMFLOAT3 position);
 	void Update(float dt, HWND windowHandle);
 	Transform GetTransform();
 	DirectX::XMFLOAT4X4 GetViewMatrix();
 	DirectX::XMFLOAT4X4 GetProjectionMatrix();
+	void FollowObject(DirectX::XMFLOAT3 offset);
 };
 

@@ -1,7 +1,7 @@
 #include "ShaderIncludes.hlsli"
 
-// Texture2D diffuseTexture           : register(t0); // "t" registers
-// SamplerState samplerOptions   : register(s0); // "s" registers
+Texture2D diffuseTexture           : register(t0); // "t" registers
+SamplerState samplerOptions   : register(s0); // "s" registers
 
 // Constant buffer
 cbuffer lightData : register (b0)
@@ -25,11 +25,12 @@ float4 main(VertexToPixel input) : SV_TARGET
     float3 lightAmt = saturate(dot(normal, dir));
     
     // Pull the surface color from the texture
-    // float3 surfaceColor = diffuseTexture.Sample(samplerOptions, input.uv);
-    float3 surfaceColor = 0;
+    float3 surfaceColor = diffuseTexture.Sample(samplerOptions, input.uv);
+    // float3 surfaceColor = 0;
 	
 	// calculate final pixel color
     float3 finalColor = calcLight(lightAmt, directionalLight, surfaceColor + (float3)input.color, normal, v, spec);
+    // saturate(finalColor);
 	
 	// Just return the input color
 	// - This color (like most values passing through the rasterizer) is 

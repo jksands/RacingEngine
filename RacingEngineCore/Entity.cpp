@@ -85,12 +85,11 @@ void Entity::ResolveInputs(float deltaTime)
 
 void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char type)
 {
-	// Set shaders in Entity Draw -> INEFFICIENT, WILL IMPLEMENT RENDER ORDER IN FUTURE!
-	material->GetVS()->SetShader();
-	material->GetPS()->SetShader();
 
 	SimpleVertexShader* vs = material->GetVS(); //Simplifies next few lines
 	SimplePixelShader* ps = material->GetPS();
+	vs->SetShader();
+	ps->SetShader();
 	if (type == 'S')
 	{
 		vs->SetMatrix4x4("view", cam->GetViewMatrix());
@@ -110,8 +109,9 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, 
 		ps->SetFloat3("camPos", cam->GetTransform().GetPosition());
 		ps->SetFloat("spec", material->GetSpecIntensity());
 		// Not needed until there's texture data
-		// ps->SetSamplerState("samplerOptions", material->GetSampler());
-		// ps->SetShaderResourceView("diffuseTexture", material->GetSRV());
+		ps->SetSamplerState("samplerOptions", material->GetSampler());
+		ps->SetShaderResourceView("diffuseTexture", material->GetSRV());
+
 		if (material->GetNormalMap())
 		{
 			ps->SetShaderResourceView("normalMap", material->GetNormalMap());

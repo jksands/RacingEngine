@@ -1,5 +1,6 @@
 #pragma once
 #include <DirectXMath.h>
+#include <cmath>
 
 #pragma region Helpers
 // helpers
@@ -50,7 +51,8 @@ inline float MagFloat3(DirectX::XMFLOAT3 float3)
 {
 	// a^2 + b^2 + c^2 = d^2
 	// d = sqrt(a^2 + b^2 + c^2)
-	return abs(sqrtf(powf(float3.x, 2.0f) + powf(float3.y, 2.0f) + powf(float3.z, 2.0f)));
+	
+	return std::abs(sqrtf(powf(float3.x, 2.0f) + powf(float3.y, 2.0f) + powf(float3.z, 2.0f)));
 }
 #pragma endregion
 
