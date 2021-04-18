@@ -244,7 +244,6 @@ void Game::CreateEntities()
 	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));E
 	Transform t = new Transform(XMFLOAT3(0, 1.0f, 0), XMFLOAT3(.05f, .05f, .05f), XMFLOAT3(0.0f, 0.0f, 0.0f));
 	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[6], t, true));
-	// Entity* e = EntityManager::GetInstance()->GetEntities()[0];
 	cam->FollowObject(XMFLOAT3(0, 1, -3));
 	
 	// floor

@@ -414,13 +414,13 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	XMFLOAT3X3 rotationMatrix;
 	XMFLOAT3X3 absRotMax;
 
-	XMFLOAT4 xAxisFloat = DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f);
-	XMFLOAT4 yAxisFloat = DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
-	XMFLOAT4 zAxisFloat = DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 0.0f);
+	XMFLOAT3 xAxisFloat = DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f);
+	XMFLOAT3 yAxisFloat = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);
+	XMFLOAT3 zAxisFloat = DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f);
 
-	XMVECTOR xAxis = XMLoadFloat4(&xAxisFloat);
-	XMVECTOR yAxis = XMLoadFloat4(&yAxisFloat);
-	XMVECTOR zAxis = XMLoadFloat4(&zAxisFloat);
+	XMVECTOR xAxis = XMLoadFloat3(&xAxisFloat);
+	XMVECTOR yAxis = XMLoadFloat3(&yAxisFloat);
+	XMVECTOR zAxis = XMLoadFloat3(&zAxisFloat);
 	
 	// myTransform->Rotate(0.0f, 10.0f, 0.0f);
 	XMMATRIX myWorldMat = XMLoadFloat4x4(&myTransform->GetWorldMatrix());
@@ -431,9 +431,9 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	XMVECTOR aQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
 	// get all the axes for each object
 	XMVECTOR myAxes[] = {
-		XMVector3Rotate(xAxis, aQuat),
-		XMVector3Rotate(yAxis, aQuat),
-		XMVector3Rotate(zAxis, aQuat)
+		XMVector3Normalize(XMVector3Rotate(xAxis, aQuat)),
+		XMVector3Normalize(XMVector3Rotate(yAxis, aQuat)),
+		XMVector3Normalize(XMVector3Rotate(zAxis, aQuat))
 		// XMVector3Normalize(XMVector3Transform(xAxis, myWorldMat)),
 		// XMVector3Normalize(XMVector3Transform(yAxis, myWorldMat)),
 		// XMVector3Normalize(XMVector3Transform(zAxis, myWorldMat))
@@ -444,9 +444,9 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	XMFLOAT3 rotation = incoming->myTransform->GetPitchYawRoll();
 	XMVECTOR quat = XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 	XMVECTOR yourAxes[] = {
-		XMVector3Rotate(xAxis, quat),
-		XMVector3Rotate(yAxis, quat),
-		XMVector3Rotate(zAxis, quat)
+		XMVector3Normalize(XMVector3Rotate(xAxis, quat)),
+		XMVector3Normalize(XMVector3Rotate(yAxis, quat)),
+		XMVector3Normalize(XMVector3Rotate(zAxis, quat))
 		// XMVector3Normalize(XMVector3Transform(xAxis, yourWorldMat)),
 		// XMVector3Normalize(XMVector3Transform(yAxis, yourWorldMat)),
 		// XMVector3Normalize(XMVector3Transform(zAxis, yourWorldMat))
@@ -465,12 +465,12 @@ int Rigidbody::SAT(Rigidbody* incoming)
 		}
 	}
 
-	// compute the translation vector
-	// incoming centre global - my center global
-	XMVECTOR transVec = XMLoadFloat3(&SubFloat3(incoming->GetCenterGlobal(),GetCenterGlobal()));
 
 	XMFLOAT3 myGlob = GetCenterGlobal();
 	XMFLOAT3 yourGlob = incoming->GetCenterGlobal();
+	// compute the translation vector
+	// incoming centre global - my center global
+	XMVECTOR transVec = XMLoadFloat3(&SubFloat3(yourGlob, myGlob));
 
 	// bring tanslation vector into a's coord frame
 	float tX = XMVectorGetX(XMVector3Dot(transVec, myAxes[0]));
@@ -560,12 +560,12 @@ int Rigidbody::SAT(Rigidbody* incoming)
 			temp = XMVectorGetZ(transVec);
 		}
 
-		// myRadius = GetHalfWidth().x * absRotMax.m[0][i] + GetHalfWidth().y * absRotMax.m[1][i] + GetHalfWidth().z * absRotMax.m[2][i];
+		myRadius = GetHalfWidth().x * absRotMax.m[0][i] + GetHalfWidth().y * absRotMax.m[1][i] + GetHalfWidth().z * absRotMax.m[2][i];
 
 		 if (abs(
-		 	XMVectorGetX(transVec) * rotationMatrix.m[i][0] + 
-		 	XMVectorGetY(transVec) * rotationMatrix.m[i][1] + 
-		 	XMVectorGetZ(transVec) * rotationMatrix.m[i][2]) 
+		 	XMVectorGetX(transVec) * rotationMatrix.m[0][i] + 
+		 	XMVectorGetY(transVec) * rotationMatrix.m[1][i] + 
+		 	XMVectorGetZ(transVec) * rotationMatrix.m[2][i]) 
 		 		> myRadius + yourRadius)
 		// if (abs(temp) > myRadius + yourRadius)
 		{
@@ -574,74 +574,77 @@ int Rigidbody::SAT(Rigidbody* incoming)
 	}
 	XMFLOAT3 myRad = GetHalfWidth();
 	XMFLOAT3 yourRad = incoming->GetHalfWidth();
-	 // L = A0 x B0 
+	XMFLOAT3 tvf;
+
+	XMStoreFloat3(&tvf, transVec);
+	 // L = A0 x B0 - YES
 	myRadius = GetHalfWidth().y * absRotMax.m[2][0] + GetHalfWidth().z * absRotMax.m[1][0];
 	yourRadius = incoming->GetHalfWidth().y * absRotMax.m[0][2] + incoming->GetHalfWidth().z * absRotMax.m[0][1];
-	if (abs(XMVectorGetZ(transVec) * rotationMatrix.m[1][0] - XMVectorGetY(transVec) * rotationMatrix.m[2][0]) > myRadius + yourRadius)
+	if (abs(tvf.z * rotationMatrix.m[1][0] - tvf.y * rotationMatrix.m[2][0]) > myRadius + yourRadius)
 	{
 		return 1;
 	}
 
-	// L = A0 x B1
+	// L = A0 x B1 - YES
 	myRadius = GetHalfWidth().y * absRotMax.m[2][1] + GetHalfWidth().z * absRotMax.m[1][1];
 	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[0][2] + incoming->GetHalfWidth().z * absRotMax.m[0][0];
-	if (abs(XMVectorGetZ(transVec) * rotationMatrix.m[1][1] - XMVectorGetY(transVec) * rotationMatrix.m[2][1]) > myRadius + yourRadius)
+	if (abs(tvf.z * rotationMatrix.m[1][1] - tvf.y * rotationMatrix.m[2][1]) > myRadius + yourRadius)
 	{
 		return 1;
 	}
 
-	// Test axis L = A0 x B2
+	// Test axis L = A0 x B2 - YES
 	myRadius = GetHalfWidth().y * absRotMax.m[2][2] + GetHalfWidth().z * absRotMax.m[1][2];
 	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[0][1] + incoming->GetHalfWidth().y * absRotMax.m[0][0];
-	if (abs(XMVectorGetZ(transVec) * rotationMatrix.m[1][2] - XMVectorGetY(transVec) * rotationMatrix.m[2][2]) > myRadius + yourRadius)
+	if (abs(tvf.z * rotationMatrix.m[1][2] - tvf.y * rotationMatrix.m[2][2]) > myRadius + yourRadius)
 	{
 		return 1;
 	}
 
-	// Test axis L = A1 x B0
+	// Test axis L = A1 x B0 - YES
 	myRadius = GetHalfWidth().x * absRotMax.m[2][0] + GetHalfWidth().z * absRotMax.m[0][0];
 	yourRadius = incoming->GetHalfWidth().y * absRotMax.m[1][2] + incoming->GetHalfWidth().z * absRotMax.m[1][1];
-	if (abs(XMVectorGetX(transVec) * rotationMatrix.m[2][0] - XMVectorGetZ(transVec) * rotationMatrix.m[0][0]) > myRadius + yourRadius)
+	if (abs(tvf.x * rotationMatrix.m[2][0] - tvf.z * rotationMatrix.m[0][0]) > myRadius + yourRadius)
 	{
 		return 1;
 	}
 
-	// Test axis L = A1 x B1
+	// Test axis L = A1 x B1 - YES
 	myRadius = GetHalfWidth().x * absRotMax.m[2][1] + GetHalfWidth().z * absRotMax.m[0][1];
 	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[1][2] + incoming->GetHalfWidth().z * absRotMax.m[1][0];
-	if (abs(XMVectorGetX(transVec) * rotationMatrix.m[2][1] - XMVectorGetZ(transVec) * rotationMatrix.m[0][1]) > myRadius + yourRadius)
+	if (abs(tvf.x * rotationMatrix.m[2][1] - tvf.z * rotationMatrix.m[0][1]) > myRadius + yourRadius)
 	{
 		return 1;
 	}
 
-	// Test axis L = A1 x B2
+	// Test axis L = A1 x B2 - YES
 	myRadius = GetHalfWidth().x * absRotMax.m[2][2] + GetHalfWidth().z * absRotMax.m[0][2];
 	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[1][1] + incoming->GetHalfWidth().y * absRotMax.m[1][0];
-	if (abs(XMVectorGetX(transVec) * rotationMatrix.m[2][2] - XMVectorGetZ(transVec) * rotationMatrix.m[0][2]) > myRadius + yourRadius)
+	if (abs(tvf.x * rotationMatrix.m[2][2] - tvf.z * rotationMatrix.m[0][2]) > myRadius + yourRadius)
 	{
 		return 1;
 	}
 
-	// Test axis L = A2 x B0
+	// Test axis L = A2 x B0 - YES
 	myRadius = GetHalfWidth().x * absRotMax.m[1][0] + GetHalfWidth().y * absRotMax.m[0][0];
 	yourRadius = incoming->GetHalfWidth().y * absRotMax.m[2][2] + incoming->GetHalfWidth().z * absRotMax.m[2][1];
-	if (abs(XMVectorGetY(transVec) * rotationMatrix.m[0][0] - XMVectorGetX(transVec) * rotationMatrix.m[1][0]) > myRadius + yourRadius)
+	if (abs(tvf.y * rotationMatrix.m[0][0] - tvf.x * rotationMatrix.m[1][0]) > myRadius + yourRadius)
 	{
 		return 1;
 	}
 
-	// Test axis L = A2 x B1
+	// Test axis L = A2 x B1 - YES
 	myRadius = GetHalfWidth().x * absRotMax.m[1][1] + GetHalfWidth().y * absRotMax.m[0][1];
 	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[2][2] + incoming->GetHalfWidth().z * absRotMax.m[2][0];
-	if (abs(XMVectorGetY(transVec) * rotationMatrix.m[0][1] - XMVectorGetX(transVec) * rotationMatrix.m[1][1]) > myRadius + yourRadius)
+	if (abs(tvf.y * rotationMatrix.m[0][1] - tvf.x * rotationMatrix.m[1][1]) > myRadius + yourRadius)
 	{
 		return 1;
 	}
-
+	
 	// Test axis L = A2 x B2
 	myRadius = GetHalfWidth().x * absRotMax.m[1][2] + GetHalfWidth().y * absRotMax.m[0][2];
 	yourRadius = incoming->GetHalfWidth().x * absRotMax.m[2][1] + incoming->GetHalfWidth().y * absRotMax.m[2][0];
-	if (abs(XMVectorGetY(transVec) * rotationMatrix.m[0][2] - XMVectorGetX(transVec) * rotationMatrix.m[1][2]) > myRadius + yourRadius)
+	if (abs(tvf.y * rotationMatrix.m[0][2] - tvf.x * rotationMatrix.m[1][2]) > myRadius + yourRadius)
 	{
 		return 1;
 	}
@@ -708,8 +711,10 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	minGlobal = GetMinGlobal();
 	maxGlobal = GetMaxGlobal();
 
-
+	// Reset accel
 	accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	// Reset Steering (MIGHT NEED TO MOVE THIS)
+	steeringOffset = XMFLOAT3(0.0f, 0.0f, 0.0f);
 }
 
 void Rigidbody::HandleDrive(int dir)
@@ -735,6 +740,85 @@ void Rigidbody::HandleDrive(int dir)
 
 		//apply the force
 		ApplyForce(tempForce);
+	}
+}
+
+void Rigidbody::HandleSteering(int dir, float dt)
+{
+	// Can't steer if not moving
+	if (vel.x == 0 && vel.y == 0 && vel.z == 0)
+		return;
+	// steer right
+	if (dir == 1)
+	{
+		// Need to set the offset vector here --
+		// Start with our local right
+		XMFLOAT3 localRight = XMFLOAT3(-1, 0, 0);
+		// ApplyForce(localRight);
+		// pass the right vector through the rotation matrix...
+		// Get our rotation and make a quat out of it
+		// XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+		// // NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
+		// XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+		// // Rotate the right and store it back into our local right
+		// XMStoreFloat3(&localRight, XMVector3Rotate(XMLoadFloat3(&localRight), rotQuat));
+		// Apply that to our forward in drive
+		steeringOffset = localRight;
+
+		// Get where our new velocity should point
+		XMFLOAT3 newVel = SubFloat3(AddFloat3(vel, localRight), pos);
+		newVel.y = 0;
+		// Normalize it by converting it to a vector and back to a float
+		XMStoreFloat3(&newVel, XMVector3Normalize(XMLoadFloat3(&newVel)));
+		// Make the new Vel have the same magnitude as the old velocity
+		float temp = MagFloat3(vel);
+		newVel = MultFloat3(newVel, temp);
+		newVel.y = vel.y;
+		// CALC ANGLE OF ROTATION
+		XMVECTOR a = XMLoadFloat3(&vel);
+		XMVECTOR b = XMLoadFloat3(&newVel);
+		XMVECTOR result = XMVector3AngleBetweenVectors(a, b);
+		float angle = XMVectorGetX(result);
+		// CHange the velocity
+		vel = newVel;
+
+		myTransform->Rotate(0, angle * dt / 3, 0);
+	}
+	// steer left
+	else if (dir == -1)
+	{
+		// Need to set the offset vector here --
+		// Start with our local right
+		XMFLOAT3 localLeft = XMFLOAT3(1, 0, 0);
+		// ApplyForce(localRight);
+		// pass the right vector through the rotation matrix...
+		// Get our rotation and make a quat out of it
+		// XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+		// // NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
+		// XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+		// // Rotate the right and store it back into our local right
+		// XMStoreFloat3(&localRight, XMVector3Rotate(XMLoadFloat3(&localRight), rotQuat));
+		// Apply that to our forward in drive
+		steeringOffset = localLeft;
+
+		// Get where our new velocity should point
+		XMFLOAT3 newVel = SubFloat3(AddFloat3(vel, localLeft), pos);
+		newVel.y = 0;
+		// Normalize it by converting it to a vector and back to a float
+		XMStoreFloat3(&newVel, XMVector3Normalize(XMLoadFloat3(&newVel)));
+		// Make the new Vel have the same magnitude as the old velocity
+		float temp = MagFloat3(vel);
+		newVel = MultFloat3(newVel, temp);
+		newVel.y = vel.y;
+		// CALC ANGLE OF ROTATION
+		XMVECTOR a = XMLoadFloat3(&vel);
+		XMVECTOR b = XMLoadFloat3(&newVel);
+		XMVECTOR result = XMVector3AngleBetweenVectors(a, b);
+		float angle = XMVectorGetX(result);
+		// CHange the velocity
+		vel = newVel;
+
+		myTransform->Rotate(0, -angle * dt / 3, 0);
 	}
 }
 

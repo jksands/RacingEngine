@@ -57,6 +57,9 @@ protected:
 	// Represent the offset from our rigidbody's global center to our parent's global center
 	DirectX::XMFLOAT3 offset;
 
+	// Represents the vector offset to point the velocity to while STEERING
+	DirectX::XMFLOAT3 steeringOffset;
+
 	// this... thing?
 	const float EPSILON = 1.401298E-45;
 
@@ -101,21 +104,6 @@ public:
 	* Returns: None
 	*/
 	void ClearCollisionList();
-	// TO DO: ADD AND REMOVE FROM COLLISION LIST IS A LATER ISSUE
-	/*
-	* Adding collision with the colliding rigidbody
-	* Params:
-	*	Rigidbody* incoming -- rigidbody I'm colliding with
-	* Returns: None
-	*/
-	void AddToCollisionList(Rigidbody* incoming);
-	/*
-	* Removers a collision with the incoming rigidbody
-	* Params:
-	*	Rigidbody* incoming
-	* Returns: None
-	*/
-	void RemoveCollisionList(Rigidbody* incoming);
 	/*
 	* Checks to see if this rigidbody is colliding with the incoing rigidbody
 	* Params:
@@ -163,6 +151,9 @@ public:
 
 	// handles driving with int telling us whic direction the car should be going (which way the force is going)
 	void HandleDrive(int dir);
+
+	// Handles steering with an int telling us whether we're steering right or left
+	void HandleSteering(int dir, float dt);
 
 #pragma region GettersAndSetters
 	// bounding spehere visibility
