@@ -63,6 +63,8 @@ protected:
 	// this... thing?
 	const float EPSILON = 1.401298E-45;
 
+	bool movingBackward;
+
 	// public methods
 public:
 	// transform info

@@ -99,7 +99,7 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, 
 		// vs->CopyAllBufferData();
 
 		ps->SetShaderResourceView("EnvironmentMap", material->GetSRV());
-		ps->SetSamplerState("samplerOptions", material->GetSampler());
+		// ps->SetSamplerState("samplerOptions", material->GetSampler());
 	}
 	else
 	{
@@ -110,8 +110,6 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, 
 
 		ps->SetFloat3("camPos", cam->GetTransform().GetPosition());
 		ps->SetFloat("spec", material->GetSpecIntensity());
-		// Not needed until there's texture data
-		ps->SetSamplerState("samplerOptions", material->GetSampler());
 		ps->SetShaderResourceView("diffuseTexture", material->GetSRV());
 
 		if (material->GetNormalMap())
@@ -119,6 +117,8 @@ void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, 
 			ps->SetShaderResourceView("normalMap", material->GetNormalMap());
 		}
 	}
+	// Not needed until there's texture data
+	ps->SetSamplerState("samplerOptions", material->GetSampler());
 
 	// Copy buffer data
 	vs->CopyAllBufferData();
@@ -195,6 +195,39 @@ void Entity::DrawDebugObject(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Ca
 	temp.SetPosition(pos.x + poffset.x, pos.y + poffset.y, pos.z + poffset.z);
 
 	vs->SetFloat4("tint", material->GetTint());
+	vs->SetMatrix4x4("world", temp.GetWorldMatrix());
+	vs->SetMatrix4x4("view", cam->GetViewMatrix());
+	vs->SetMatrix4x4("proj", cam->GetProjectionMatrix());
+
+
+	// Copy buffer data
+	vs->CopyAllBufferData();
+	// ps->CopyAllBufferData();
+
+	// Set buffers before drawing
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	ctx->IASetVertexBuffers(0, 1, colliderMesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
+	ctx->IASetIndexBuffer(colliderMesh->GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	// Actual Draw call
+	ctx->DrawIndexed(
+		colliderMesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
+		0,     // Offset to the first index we want to use
+		0);    // Offset to add to each index when looking up vertices
+}
+
+void Entity::DrawHandles(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps)
+{
+	// Set shaders in Entity Draw->INEFFICIENT, WILL IMPLEMENT RENDER ORDER IN FUTURE!
+	vs->SetShader();
+	ps->SetShader();
+
+
+	Transform temp = transform;
+	temp.SetScale(5, 5, 5);
+
+	vs->SetFloat4("tint", XMFLOAT4(1,1,0,0));
 	vs->SetMatrix4x4("world", temp.GetWorldMatrix());
 	vs->SetMatrix4x4("view", cam->GetViewMatrix());
 	vs->SetMatrix4x4("proj", cam->GetProjectionMatrix());

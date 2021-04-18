@@ -748,12 +748,26 @@ void Rigidbody::HandleSteering(int dir, float dt)
 	// Can't steer if not moving
 	if (vel.x == 0 && vel.y == 0 && vel.z == 0)
 		return;
+
+	// Get the normalized vel for dot product
+	XMVECTOR normalVel = XMVector3Normalize(XMLoadFloat3(&vel));
+	// Get the normalized forward
+	XMVECTOR normalFor = XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f); // -1 here since the car model is flipped
+	// Get our rotation and make a quat out of it
+	XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+	// NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
+	XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+	// rotate local forward to be car's forward
+	// normalFor = XMVector3Rotate(normalFor, rotQuat);
+	// store the result -- will be 1 if pointing in same direction (moving forward)
+	float dotRes = XMVectorGetX(XMVector3Dot(normalVel, normalFor));
+	dotRes = dotRes < 0 ? -1 : 1;
 	// steer right
 	if (dir == 1)
 	{
 		// Need to set the offset vector here --
 		// Start with our local right
-		XMFLOAT3 localRight = XMFLOAT3(-1, 0, 0);
+		XMFLOAT3 localRight = XMFLOAT3(-1 * dotRes, 0, 0);
 		// ApplyForce(localRight);
 		// pass the right vector through the rotation matrix...
 		// Get our rotation and make a quat out of it
@@ -766,7 +780,10 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		steeringOffset = localRight;
 
 		// Get where our new velocity should point
-		XMFLOAT3 newVel = SubFloat3(AddFloat3(vel, localRight), pos);
+		XMFLOAT3 newVel = // SubFloat3(
+			AddFloat3(vel, localRight)
+			// , pos)
+			;
 		newVel.y = 0;
 		// Normalize it by converting it to a vector and back to a float
 		XMStoreFloat3(&newVel, XMVector3Normalize(XMLoadFloat3(&newVel)));
@@ -781,15 +798,17 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		float angle = XMVectorGetX(result);
 		// CHange the velocity
 		vel = newVel;
-
-		myTransform->Rotate(0, angle * dt / 3, 0);
+		if (angle < 1)
+			angle = 1;
+		float rotateAmt = -1 * localRight.x * angle * dt / 3;
+		myTransform->Rotate(0, rotateAmt, 0);
 	}
 	// steer left
 	else if (dir == -1)
 	{
 		// Need to set the offset vector here --
 		// Start with our local right
-		XMFLOAT3 localLeft = XMFLOAT3(1, 0, 0);
+		XMFLOAT3 localLeft = XMFLOAT3(1 * dotRes, 0, 0);
 		// ApplyForce(localRight);
 		// pass the right vector through the rotation matrix...
 		// Get our rotation and make a quat out of it
@@ -802,7 +821,10 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		steeringOffset = localLeft;
 
 		// Get where our new velocity should point
-		XMFLOAT3 newVel = SubFloat3(AddFloat3(vel, localLeft), pos);
+		XMFLOAT3 newVel = // SubFloat3(
+			AddFloat3(vel, localLeft)
+			// , pos)
+			;
 		newVel.y = 0;
 		// Normalize it by converting it to a vector and back to a float
 		XMStoreFloat3(&newVel, XMVector3Normalize(XMLoadFloat3(&newVel)));
@@ -815,10 +837,12 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		XMVECTOR b = XMLoadFloat3(&newVel);
 		XMVECTOR result = XMVector3AngleBetweenVectors(a, b);
 		float angle = XMVectorGetX(result);
+		if (angle < 1)
+			angle = 1;
 		// CHange the velocity
 		vel = newVel;
 
-		myTransform->Rotate(0, -angle * dt / 3, 0);
+		myTransform->Rotate(0, -1 * localLeft.x * angle * dt / 3, 0);
 	}
 }
 

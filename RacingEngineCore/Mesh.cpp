@@ -22,7 +22,7 @@ Mesh::Mesh(Vertex vertices[],
     int indexAmt, 
     ID3D11Device* device)
 {
-	CalculateTangents(vertices, vertexAmt, _indices, indexAmt);
+	// CalculateTangents(vertices, vertexAmt, _indices, indexAmt);
     CreateBuffer(vertices, vertexAmt, _indices, indexAmt, device);
 	// Keep verts around for bounding box generation
 	for (int i = 0; i < vertexAmt; i++)

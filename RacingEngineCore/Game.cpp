@@ -221,7 +221,7 @@ void Game::LoadMaterials()
 {
 	materials.push_back(new Material(skyPS, skyVS, XMFLOAT4(1, 1, 1, 0), 0.1f, skybox.Get(), sampler));
 	materials.push_back(new Material(normalMapPS, normalMapVS, XMFLOAT4(1, 1, 1, 0), 1.0f, rocks, sampler, rocksNM));
-	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(0, 0, 1, 0), 1.0f, metal, sampler));
+	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(1, 1, 1, 0), 1.0f, metal, sampler));
 	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f));
 	materials.push_back(new Material(colorPS, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f));
 	materials.push_back(new Material(barePS, bareVS, XMFLOAT4(1, 1, 1, 0), 0.1f));
@@ -236,6 +236,14 @@ void Game::LoadMeshes()
 	meshes.push_back(new Mesh("../../Assets/Models/cube.obj", device));
 	meshes.push_back(new Mesh("../../Assets/Models/Car.obj", device));
 	// meshes.push_back(new Mesh("../../Assets/FBX/car3.fbx", device, true));
+
+	// Vertex v1 = {};
+	// Vertex v2 = {};
+	// v2.Position = XMFLOAT3(0, 0, 1);
+	// Vertex verts[] = { v1,v2 };
+	// UINT indices[] = { 0,1 };
+	// meshes.push_back(new Mesh(verts, 2, indices, 2, device));
+	
 }
 
 // Creates entities.  Can choose any mesh and any material, and position anywhere
@@ -247,7 +255,7 @@ void Game::CreateEntities()
 	cam->FollowObject(XMFLOAT3(0, 1, -3));
 	
 	// floor
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-0.0f, -5.0f, -0.0f), XMFLOAT3(100.0f, 2.0f, 100.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[2], Transform(XMFLOAT3(-0.0f, -5.0f, -0.0f), XMFLOAT3(100.0f, 2.0f, 100.0f)), true, false));
 
 	// FBX model
 	// EntityManager::GetInstance()->AddEntity(new Entity(meshes[4], materials[5], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.1f, .1f, .1f))));
@@ -436,6 +444,7 @@ void Game::Draw(float deltaTime, float totalTime)
 			// data passed in
 			entities[i]->DrawCollider(context, cam, meshes[2], vertexShader, colorPS);
 			// entities[i]->DrawDebugObject(context, cam, meshes[0], vertexShader, colorPS);
+			// entities[i]->DrawHandles(context, cam, meshes[meshes.size() - 1], vertexShader, colorPS);
 
 
 		}

@@ -19,6 +19,7 @@ public:
 	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char c = ' ');
 	void DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps);
 	void DrawDebugObject(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps);
+	void DrawHandles(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps);
 	bool IsPhysicsObject();
 	Rigidbody* GetRigidBody();
 
