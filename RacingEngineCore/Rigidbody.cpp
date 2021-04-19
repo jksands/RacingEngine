@@ -685,9 +685,9 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	}
 
 	// add accel to vel
-	vel = AddFloat3(vel, accel);
+	vel = AddFloat3(vel, MultFloat3(accel, deltaTime));
 
-	vel = MultFloat3(vel, deltaTime);
+	// vel = MultFloat3(vel, deltaTime);
 
 	// apply friction
 	if (tempFric > 0.0f)
@@ -700,7 +700,7 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	}
 
 	// add vel to pos
-	pos = AddFloat3(pos, vel);
+	pos = AddFloat3(pos, MultFloat3(vel, deltaTime));
 	myTransform->MoveRelative(vel.x, vel.y, vel.z);
 
 	// updating local to global
@@ -716,6 +716,9 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	// Reset Steering (MIGHT NEED TO MOVE THIS)
 	steeringOffset = XMFLOAT3(0.0f, 0.0f, 0.0f);
 }
+#pragma endregion
+
+#pragma region Drive
 
 void Rigidbody::HandleDrive(int dir)
 {
@@ -742,6 +745,10 @@ void Rigidbody::HandleDrive(int dir)
 		ApplyForce(tempForce);
 	}
 }
+
+#pragma endregion
+
+#pragma region Steering
 
 void Rigidbody::HandleSteering(int dir, float dt)
 {
