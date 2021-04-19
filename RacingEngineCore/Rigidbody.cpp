@@ -656,7 +656,7 @@ int Rigidbody::SAT(Rigidbody* incoming)
 #pragma endregion
 
 #pragma region update
-//  ISSUE: WORLD MATRIX DOES NOT UPDATE, MAKING THIS RELATIVE TO CENTER GLOBAAL WOULD BE POGGERS
+// TODO: make speed relative to a function of vel
 void  Rigidbody::Update(float deltaTime, float totalTime)  
 {
 	float tempFric = 0.0f;
@@ -689,14 +689,26 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 
 	// vel = MultFloat3(vel, deltaTime);
 
-	// apply friction
-	if (tempFric > 0.0f)
+	// only apply friction is we are pressing a key
+	if (!isDrive)
 	{
-		ApplyFriction(tempFric);
+		// apply friction
+		if (tempFric > 0.0f)
+		{
+			ApplyFriction(tempFric);
+		}
+		else
+		{
+			ApplyFriction();
+		}
 	}
-	else
+
+	// checking for max speed
+	if (MagFloat3(vel) > maxSpeed)
 	{
-		ApplyFriction();
+		XMFLOAT3 tempVel;
+		XMStoreFloat3(&tempVel, XMVector3Normalize(XMLoadFloat3(&vel)));
+		vel = MultFloat3(tempVel, maxSpeed);
 	}
 
 	// add vel to pos
@@ -715,6 +727,8 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	// Reset Steering (MIGHT NEED TO MOVE THIS)
 	steeringOffset = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	// reset is drive
+	isDrive = false;
 }
 #pragma endregion
 
@@ -722,6 +736,7 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 
 void Rigidbody::HandleDrive(int dir)
 {
+	isDrive = true;
 	if (dir == 1)
 	{
 		// use the local z axis
