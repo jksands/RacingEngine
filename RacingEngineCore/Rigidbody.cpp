@@ -685,9 +685,9 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	}
 
 	// add accel to vel
-	vel = AddFloat3(vel, accel);
+	vel = AddFloat3(vel, MultFloat3(accel, deltaTime));
 
-	vel = MultFloat3(vel, deltaTime);
+	// vel = MultFloat3(vel, deltaTime);
 
 	// apply friction
 	if (tempFric > 0.0f)
@@ -700,7 +700,7 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	}
 
 	// add vel to pos
-	pos = AddFloat3(pos, vel);
+	pos = AddFloat3(pos, MultFloat3(vel, deltaTime));
 	myTransform->MoveRelative(vel.x, vel.y, vel.z);
 
 	// updating local to global
@@ -800,7 +800,7 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		vel = newVel;
 		if (angle < 1)
 			angle = 1;
-		float rotateAmt = -1 * localRight.x * angle * dt / 3;
+		float rotateAmt = -1 * localRight.x * angle * dt;
 		myTransform->Rotate(0, rotateAmt, 0);
 	}
 	// steer left
@@ -842,7 +842,7 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		// CHange the velocity
 		vel = newVel;
 
-		myTransform->Rotate(0, -1 * localLeft.x * angle * dt / 3, 0);
+		myTransform->Rotate(0, -1 * localLeft.x * angle * dt, 0);
 	}
 }
 
