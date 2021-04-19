@@ -761,11 +761,12 @@ void Rigidbody::HandleSteering(int dir, float dt)
 	// Get the normalized forward
 	XMVECTOR normalFor = XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f); // -1 here since the car model is flipped
 	// Get our rotation and make a quat out of it
-	XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+	// XMFLOAT3 myR = myTransform->GetPitchYawRoll();
 	// NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
-	XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+	// XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
 	// rotate local forward to be car's forward
 	// normalFor = XMVector3Rotate(normalFor, rotQuat);
+
 	// store the result -- will be 1 if pointing in same direction (moving forward)
 	float dotRes = XMVectorGetX(XMVector3Dot(normalVel, normalFor));
 	dotRes = dotRes < 0 ? -1 : 1;
@@ -796,17 +797,18 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		XMStoreFloat3(&newVel, XMVector3Normalize(XMLoadFloat3(&newVel)));
 		// Make the new Vel have the same magnitude as the old velocity
 		float temp = MagFloat3(vel);
-		newVel = MultFloat3(newVel, temp);
 		newVel.y = vel.y;
+		newVel = MultFloat3(newVel, temp);
+		if (temp > 1)
+			temp = temp;
 		// CALC ANGLE OF ROTATION
 		XMVECTOR a = XMLoadFloat3(&vel);
 		XMVECTOR b = XMLoadFloat3(&newVel);
 		XMVECTOR result = XMVector3AngleBetweenVectors(a, b);
 		float angle = XMVectorGetX(result);
+
 		// CHange the velocity
 		vel = newVel;
-		if (angle < 1)
-			angle = 1;
 		float rotateAmt = -1 * localRight.x * angle * dt;
 		myTransform->Rotate(0, rotateAmt, 0);
 	}
@@ -844,8 +846,7 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		XMVECTOR b = XMLoadFloat3(&newVel);
 		XMVECTOR result = XMVector3AngleBetweenVectors(a, b);
 		float angle = XMVectorGetX(result);
-		if (angle < 1)
-			angle = 1;
+
 		// CHange the velocity
 		vel = newVel;
 

@@ -31,6 +31,7 @@ void Entity::Update(float deltaTime, float totalTime)
 {
 	if (phyicsObject && isDynamic)
 	{
+		ResolveInputs(deltaTime);
 		rb->Update(deltaTime, totalTime);
 		// ADD OVERLOAD TO TRANSFORM: AddOffset
 		XMFLOAT3 tPos = rb->GetParentalOffset();
@@ -47,7 +48,6 @@ void Entity::Update(float deltaTime, float totalTime)
 		XMFLOAT3 cPos = rb->GetCenterGlobal();
 		// The rigidbody has moved, so we move the mesh to follow it
 		transform.SetPosition(cPos.x + tPos.x, cPos.y+ tPos.y, cPos.z + tPos.z);
-		ResolveInputs(deltaTime);
 	}
 }
 
