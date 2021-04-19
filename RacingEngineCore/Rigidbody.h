@@ -47,8 +47,8 @@ protected:
 
 	// gravity
 	float grav = 4.0f;
-	float speed = 0.025f;
-	float maxSpeed = 5.0f;
+	float speed = 50.025f;
+	float maxSpeed = 500.0f;
 	float turnRadius = 0.5f;
 	float frictionCoeff = 0.0f;
 
@@ -67,6 +67,7 @@ protected:
 	bool movingBackward;
 
 	bool isDrive;
+	std::vector<Rigidbody*> collisionList;
 
 	// public methods
 public:
@@ -146,6 +147,8 @@ public:
 	* OUTPUT: NONE
 	*/
 	void Update(float deltaTime, float totalTime);
+	void AddToCollisionList(float dt);
+	void ResolveCollisions(float dt);
 	
 	/*
 	* Uses ARBB collision detections to return if this is colliding with another giidbody

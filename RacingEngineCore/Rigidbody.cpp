@@ -666,25 +666,10 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	if (!isGrounded)
 	{
 		// apply gravity
-		ApplyGrav(grav);
+		// ApplyGrav(grav);
 	}
 
-	// Applying a normal force from the collision to stop the object
-	// TO DO: GET A MORE SOPHISTICATED VERSION OF THIS
-	if (IsColliding(EntityManager::GetInstance()->GetRigidBodies()[1]))
-	{
-		// THIS WORKS AND KEEPS CAR STILL
-		accel.y = 0.0f;
-		vel.y = 0.0f;
-		// vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		// accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-		// tempFric = EntityManager::GetInstance()->GetRigidBodies()[1]->frictionCoeff;
-		tint = XMFLOAT4(1, 0, 0, 0);
-	}
-	else
-	{
-		tint = XMFLOAT4(1, 1, 1, 0);
-	}
+	AddToCollisionList(deltaTime);
 
 	// add accel to vel
 	vel = AddFloat3(vel, MultFloat3(accel, deltaTime));
@@ -715,20 +700,20 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 
 	// add vel to pos
 	pos = AddFloat3(pos, MultFloat3(vel, deltaTime));
-	myTransform->MoveRelative(vel.x, vel.y, vel.z);
+	myTransform->MoveRelative(vel.x * deltaTime, vel.y * deltaTime, vel.z * deltaTime);
 	XMFLOAT3 tempVel = vel;
 	if (MagFloat3(tempVel) == 0)
 	{
 		tempVel = XMFLOAT3(0, 0, 1);
-		// Get our rotation and make a quat out of it
-		XMFLOAT3 myR = myTransform->GetPitchYawRoll();
-		// NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
-		XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
-		XMStoreFloat3(&tempVel, XMVector3Rotate(XMLoadFloat3(&tempVel), rotQuat));
 		
 	}
 
-	myTransform->LookAt(XMLoadFloat3(&pos), XMVector3Normalize(XMLoadFloat3(&tempVel)));
+	// Get our rotation and make a quat out of it
+	XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+	// NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
+	XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+	XMStoreFloat3(&tempVel, XMVector3Rotate(XMVector3Normalize(XMLoadFloat3(&tempVel)), rotQuat));
+
 
 	// updating local to global
 	localToGlobalMat = myTransform->GetWorldMatrix();
@@ -742,6 +727,50 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	// reset is drive
 	isDrive = false;
+}
+void Rigidbody::AddToCollisionList(float dt)
+{
+	collisionList.clear();
+	std::vector<Rigidbody*> rbs = EntityManager::GetInstance()->GetRigidBodies();
+	// loop through all entities in entity Manager
+	for (int i = 1; i < rbs.size(); i++)
+	{
+		if (IsColliding(rbs[i]))
+		{
+			collisionList.push_back(rbs[i]);
+		}
+	}
+	ResolveCollisions(dt);
+	
+}
+void Rigidbody::ResolveCollisions(float dt)
+{
+	tint = XMFLOAT4(1, 1, 1, 0);
+	for (int i = 0; i < collisionList.size(); i++)
+	{
+		XMFLOAT3 me = GetCenterGlobal();
+		XMFLOAT3 you = collisionList[i]->GetCenterGlobal();
+		// check for ground collision
+		if (you.y < me.y) // you are beneath me
+		{
+			// colliding with ground
+			// THIS WORKS AND KEEPS CAR STILL
+			accel.y = 0.0f;
+			vel.y = 0.0f;
+			// vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			// accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			// tempFric = EntityManager::GetInstance()->GetRigidBodies()[1]->frictionCoeff;
+			tint = XMFLOAT4(1, 0, 0, 0);
+		}
+		else
+		{
+			pos = AddFloat3(pos, MultFloat3(vel, -1));
+			myTransform->MoveRelative(-vel.x * dt, -vel.y * dt, -vel.z * dt);
+			vel = MultFloat3(vel, -.5f);
+			accel = MultFloat3(accel, -1);
+			tint = XMFLOAT4(1, 0, 0, 0);
+		}
+	}
 }
 #pragma endregion
 
@@ -789,9 +818,10 @@ void Rigidbody::HandleSteering(int dir, float dt)
 	// Get the normalized forward
 	XMVECTOR normalFor = XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f); // -1 here since the car model is flipped
 	// Get our rotation and make a quat out of it
-	// XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+	XMFLOAT3 myR = myTransform->GetPitchYawRoll();
 	// NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
-	// XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+	XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+	normalVel = XMVector3Rotate(normalVel, rotQuat);
 	// rotate local forward to be car's forward
 	// normalFor = XMVector3Rotate(normalFor, rotQuat);
 
@@ -803,18 +833,12 @@ void Rigidbody::HandleSteering(int dir, float dt)
 	{
 		// Need to set the offset vector here --
 		// Start with our local right
-		XMFLOAT3 localRight = XMFLOAT3(-1 * dotRes, 0, 0);
-		ApplyForce(localRight);
-		return;
+		XMFLOAT3 localRight = XMFLOAT3(-.001f * dotRes, 0, 0);
+		// ApplyForce(DivFloat3(localRight, 10));
+		// return;
 		XMVECTOR vecRight = XMLoadFloat3(&localRight);
-		// ApplyForce(localRight);
-		// pass the right vector through the rotation matrix...
-		// Get our rotation and make a quat out of it
-		// XMFLOAT3 myR = myTransform->GetPitchYawRoll();
-		// // NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
-		// XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
-		// // Rotate the right and store it back into our local right
-		// XMStoreFloat3(&localRight, XMVector3Rotate(XMLoadFloat3(&localRight), rotQuat));
+		vecRight = XMVector3Rotate(vecRight,rotQuat);
+
 		// Apply that to our forward in drive
 		steeringOffset = localRight;
 		XMFLOAT3 newVel;
@@ -832,8 +856,6 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		// XMStoreFloat3(&newVel, XMVector3Normalize(XMLoadFloat3(&newVel)));
 		// Make the new Vel have the same magnitude as the old velocity
 		newVel.y = vel.y;
-		if (temp > .005f)
-			temp = temp;
 		// CALC ANGLE OF ROTATION
 		XMVECTOR posVec = XMLoadFloat3(&pos);
 		XMVECTOR a = normalVel;
@@ -847,6 +869,7 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		vel = newVel;
 		float rotateAmt = -1 * localRight.x * angle * dt;
 		// myTransform->Rotate(0, rotateAmt, 0);
+		myTransform->LookAt(posVec, b);
 	}
 	// steer left
 	else if (dir == -1)

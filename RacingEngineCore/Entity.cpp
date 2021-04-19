@@ -71,16 +71,16 @@ void Entity::ResolveInputs(float deltaTime)
 	if (GetAsyncKeyState('A') & 0x8000)
 	{
 		// negative rotation on Y axis by the turn radius
-		// transform.Rotate(0.0f, (-5 * deltaTime), 0.0f);
-		rb->HandleSteering(-1, deltaTime);
+		transform.Rotate(0.0f, (-2 * deltaTime), 0.0f);
+		// rb->HandleSteering(-1, deltaTime);
 	}
 
 	// if d, positive rotation on the Y axis
 	if (GetAsyncKeyState('D') & 0x8000)
 	{
 		// positive rotation on Y axis by the turn radius
-		// transform.Rotate(0.0f, (5 * deltaTime), 0.0f);
-		rb->HandleSteering(1, deltaTime);
+		transform.Rotate(0.0f, (2 * deltaTime), 0.0f);
+		// rb->HandleSteering(1, deltaTime);
 	}
 }
 #pragma endregion

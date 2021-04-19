@@ -131,7 +131,7 @@ void Transform::LookAt(DirectX::XMVECTOR pos, DirectX::XMVECTOR dir)
 	// XMMATRIX tempRot = XMMatrixLookAtLH(pos, pos + dir, XMVectorSet(0, 1, 0, 0));
 	
 	XMMATRIX tempRot = XMMatrixLookToLH(pos, dir, XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-	return;
+	//return;
 	XMVECTOR quatRot = XMQuaternionRotationMatrix(tempRot);
 	XMFLOAT3 tempFloatRot;
 	XMStoreFloat3(&rotation, quatRot);

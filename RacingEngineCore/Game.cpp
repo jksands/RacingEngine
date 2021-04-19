@@ -251,12 +251,15 @@ void Game::CreateEntities()
 {
 	// entities.push_back(new Entity(meshes[2], materials[3], Transform(XMFLOAT3(-1, 0, 0))));E
 	// Transform t = ;
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[6], Transform(XMFLOAT3(0, 1.0f, 0), XMFLOAT3(.05f, .05f, .05f), XMFLOAT3(0.0f, 0.0f, 0.0f)), true));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[3], materials[6], Transform(XMFLOAT3(0, 5.0f, 0), XMFLOAT3(.05f, .05f, .05f), XMFLOAT3(0.0f, 0.0f, 0.0f)), true));
 	// t = nullptr;
 	cam->FollowObject(XMFLOAT3(0, 1, -3));
 	
 	// floor
 	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[2], Transform(XMFLOAT3(-0.0f, -5.0f, -0.0f), XMFLOAT3(1000.0f, 2.0f, 1000.0f)), true, false));
+	// wall
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[2], Transform(XMFLOAT3(-50.0f, 11.0f, -0.0f), XMFLOAT3(10.0f, 20.0f, 100.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[2], Transform(XMFLOAT3(-0.0f, 11.0f, 50.0f), XMFLOAT3(100.0f, 20.0f, 10.0f)), true, false));
 
 	// FBX model
 	// EntityManager::GetInstance()->AddEntity(new Entity(meshes[4], materials[5], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.1f, .1f, .1f))));
