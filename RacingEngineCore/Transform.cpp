@@ -126,6 +126,26 @@ void Transform::MoveRelative(float x, float y, float z)
 
 }
 
+void Transform::LookAt(DirectX::XMVECTOR pos, DirectX::XMVECTOR dir)
+{
+	// XMMATRIX tempRot = XMMatrixLookAtLH(pos, pos + dir, XMVectorSet(0, 1, 0, 0));
+	
+	XMMATRIX tempRot = XMMatrixLookToLH(pos, dir, XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+	return;
+	XMVECTOR quatRot = XMQuaternionRotationMatrix(tempRot);
+	XMFLOAT3 tempFloatRot;
+	XMStoreFloat3(&rotation, quatRot);
+	
+	matrixDirty = true;
+	return;
+
+	XMMATRIX tempPos = XMMatrixTranslation(position.x, position.y, position.z);
+	XMMATRIX tempScale = XMMatrixScaling(scale.x, scale.y, scale.z);
+	XMMATRIX world = tempScale * tempRot * tempPos;
+	// wMat = wMat * tempMat;
+	XMStoreFloat4x4(&worldMatrix, world);
+}
+
 void Transform::Rotate(float pitch, float yaw, float roll)
 {
 	rotation.x += pitch;

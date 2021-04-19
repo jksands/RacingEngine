@@ -48,7 +48,7 @@ protected:
 	// gravity
 	float grav = 4.0f;
 	float speed = 0.05f;
-	float maxSpeed = 5.0f;
+	float maxSpeed = 1.0f;
 	float turnRadius = 0.5f;
 	float frictionCoeff = 0.0f;
 

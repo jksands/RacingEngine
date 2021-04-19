@@ -714,6 +714,19 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	// add vel to pos
 	pos = AddFloat3(pos, MultFloat3(vel, deltaTime));
 	myTransform->MoveRelative(vel.x, vel.y, vel.z);
+	XMFLOAT3 tempVel = vel;
+	if (MagFloat3(tempVel) == 0)
+	{
+		tempVel = XMFLOAT3(0, 0, 1);
+		// Get our rotation and make a quat out of it
+		XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+		// NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
+		XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+		XMStoreFloat3(&tempVel, XMVector3Rotate(XMLoadFloat3(&tempVel), rotQuat));
+		
+	}
+
+	myTransform->LookAt(XMLoadFloat3(&pos), XMVector3Normalize(XMLoadFloat3(&tempVel)));
 
 	// updating local to global
 	localToGlobalMat = myTransform->GetWorldMatrix();
@@ -725,8 +738,6 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 
 	// Reset accel
 	accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	// Reset Steering (MIGHT NEED TO MOVE THIS)
-	steeringOffset = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	// reset is drive
 	isDrive = false;
 }
@@ -770,7 +781,7 @@ void Rigidbody::HandleSteering(int dir, float dt)
 	// Can't steer if not moving
 	if (vel.x == 0 && vel.y == 0 && vel.z == 0)
 		return;
-
+	XMFLOAT3 tempVel = vel;
 	// Get the normalized vel for dot product
 	XMVECTOR normalVel = XMVector3Normalize(XMLoadFloat3(&vel));
 	// Get the normalized forward
@@ -791,6 +802,9 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		// Need to set the offset vector here --
 		// Start with our local right
 		XMFLOAT3 localRight = XMFLOAT3(-1 * dotRes, 0, 0);
+		ApplyForce(localRight);
+		return;
+		XMVECTOR vecRight = XMLoadFloat3(&localRight);
 		// ApplyForce(localRight);
 		// pass the right vector through the rotation matrix...
 		// Get our rotation and make a quat out of it
@@ -801,31 +815,36 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		// XMStoreFloat3(&localRight, XMVector3Rotate(XMLoadFloat3(&localRight), rotQuat));
 		// Apply that to our forward in drive
 		steeringOffset = localRight;
-
-		// Get where our new velocity should point
-		XMFLOAT3 newVel = // SubFloat3(
-			AddFloat3(vel, localRight)
-			// , pos)
-			;
-		newVel.y = 0;
-		// Normalize it by converting it to a vector and back to a float
-		XMStoreFloat3(&newVel, XMVector3Normalize(XMLoadFloat3(&newVel)));
-		// Make the new Vel have the same magnitude as the old velocity
+		XMFLOAT3 newVel;
+		// Add the right vector to the normalized velocity vector
+		XMVECTOR newVelVec = vecRight + normalVel;
+		newVelVec = XMVector3Normalize(newVelVec);
 		float temp = MagFloat3(vel);
+		newVelVec = newVelVec * temp;
+		
+
+		// Store result into newVel float3
+		XMStoreFloat3(&newVel, newVelVec);
+		// newVel.y = 0;
+		// Normalize it by converting it to a vector and back to a float
+		// XMStoreFloat3(&newVel, XMVector3Normalize(XMLoadFloat3(&newVel)));
+		// Make the new Vel have the same magnitude as the old velocity
 		newVel.y = vel.y;
-		newVel = MultFloat3(newVel, temp);
-		if (temp > 1)
+		if (temp > .005f)
 			temp = temp;
 		// CALC ANGLE OF ROTATION
-		XMVECTOR a = XMLoadFloat3(&vel);
-		XMVECTOR b = XMLoadFloat3(&newVel);
-		XMVECTOR result = XMVector3AngleBetweenVectors(a, b);
+		XMVECTOR posVec = XMLoadFloat3(&pos);
+		XMVECTOR a = normalVel;
+		XMVECTOR b = XMVector3Normalize(newVelVec);
+		// XMMATRIX tempMat = XMMatrixLookToLH(posVec, b, XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+		
+		XMVECTOR result = XMVector3AngleBetweenNormals(a, b);
 		float angle = XMVectorGetX(result);
 
 		// CHange the velocity
 		vel = newVel;
 		float rotateAmt = -1 * localRight.x * angle * dt;
-		myTransform->Rotate(0, rotateAmt, 0);
+		// myTransform->Rotate(0, rotateAmt, 0);
 	}
 	// steer left
 	else if (dir == -1)

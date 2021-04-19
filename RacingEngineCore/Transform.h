@@ -32,6 +32,7 @@ public:
 	void Rotate(float pitch, float yaw, float roll);
 	void Scale(float x, float y, float z);
 	void MoveRelative(float x, float y, float z);
+	void LookAt(DirectX::XMVECTOR pos, DirectX::XMVECTOR dir);
 
 };
 
