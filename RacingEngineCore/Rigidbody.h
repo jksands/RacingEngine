@@ -47,8 +47,8 @@ protected:
 
 	// gravity
 	float grav = 4.0f;
-	float speed = 0.05f;
-	float maxSpeed = 1.0f;
+	float speed = 0.025f;
+	float maxSpeed = 5.0f;
 	float turnRadius = 0.5f;
 	float frictionCoeff = 0.0f;
 
@@ -123,7 +123,7 @@ public:
 	*	float incomingFrictionCoefficient -- coefficient of friction to be used in the friction equations
 	OUTPUT: NONE
 	*/
-	void ApplyFriction(float incomingFrictionCoefficient = 0.005f);
+	void ApplyFriction(float incomingFrictionCoefficient = 0.0001f);
 	/*
 	* Applies a force to the rigidbody
 	* ARGUMENTS: DirectX::XMFLOAT3 incomingForce -- force being applied to the rigidbody
