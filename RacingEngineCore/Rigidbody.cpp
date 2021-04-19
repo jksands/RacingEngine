@@ -344,7 +344,7 @@ void  Rigidbody::ApplyFriction(float incomingFrictionCoefficient) // dont call u
 	vel.x *= (1 - incomingFrictionCoefficient);
 	vel.z *= (1 - incomingFrictionCoefficient);
 
-	if (MagFloat3(vel) < 0.0001f)
+	if (MagFloat3(vel) < 0.00001f)
 	{
 		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	}
