@@ -334,9 +334,9 @@ bool Rigidbody::IsColliding(Rigidbody* incoming)
 void  Rigidbody::ApplyFriction(float incomingFrictionCoefficient) // dont call unless mioving   --  overcoming static coefficient of friction
 {
 	// makes sure it's not too low
-	if (incomingFrictionCoefficient < 0.0001f)
+	if (incomingFrictionCoefficient < 0.000001f)
 	{
-		incomingFrictionCoefficient = 0.00001f;
+		incomingFrictionCoefficient = 0.000001f;
 	}
 
 	// coudl probs change these to just the x and z components. Don't need to update the y
@@ -344,7 +344,7 @@ void  Rigidbody::ApplyFriction(float incomingFrictionCoefficient) // dont call u
 	vel.x *= (1 - incomingFrictionCoefficient);
 	vel.z *= (1 - incomingFrictionCoefficient);
 
-	if (MagFloat3(vel) < 0.00001f)
+	if (MagFloat3(vel) < 0.001f)
 	{
 		vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	}
@@ -657,6 +657,8 @@ int Rigidbody::SAT(Rigidbody* incoming)
 
 #pragma region update
 // TODO: make speed relative to a function of vel
+//  -- make a button for cruise control
+//  -- make a button for just brakes
 void  Rigidbody::Update(float deltaTime, float totalTime)  
 {
 	float tempFric = 0.0f;
