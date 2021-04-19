@@ -666,7 +666,7 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	if (!isGrounded)
 	{
 		// apply gravity
-		// ApplyGrav(grav);
+		ApplyGrav(grav);
 	}
 
 	AddToCollisionList(deltaTime);
@@ -764,6 +764,7 @@ void Rigidbody::ResolveCollisions(float dt)
 		}
 		else
 		{
+			// XMVector3Reflect
 			pos = AddFloat3(pos, MultFloat3(vel, -1));
 			myTransform->MoveRelative(-vel.x * dt, -vel.y * dt, -vel.z * dt);
 			vel = MultFloat3(vel, -.5f);
