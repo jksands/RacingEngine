@@ -807,7 +807,7 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		vel = newVel;
 		if (angle < 1)
 			angle = 1;
-		float rotateAmt = -1 * localRight.x * angle * dt / 3;
+		float rotateAmt = -1 * localRight.x * angle * dt;
 		myTransform->Rotate(0, rotateAmt, 0);
 	}
 	// steer left
@@ -849,7 +849,7 @@ void Rigidbody::HandleSteering(int dir, float dt)
 		// CHange the velocity
 		vel = newVel;
 
-		myTransform->Rotate(0, -1 * localLeft.x * angle * dt / 3, 0);
+		myTransform->Rotate(0, -1 * localLeft.x * angle * dt, 0);
 	}
 }
 
