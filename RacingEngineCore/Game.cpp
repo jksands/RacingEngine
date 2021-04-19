@@ -256,7 +256,7 @@ void Game::CreateEntities()
 	cam->FollowObject(XMFLOAT3(0, 1, -3));
 	
 	// floor
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[2], Transform(XMFLOAT3(-0.0f, -5.0f, -0.0f), XMFLOAT3(100.0f, 2.0f, 100.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[2], Transform(XMFLOAT3(-0.0f, -5.0f, -0.0f), XMFLOAT3(500.0f, 2.0f, 500.0f)), true, false));
 
 	// FBX model
 	// EntityManager::GetInstance()->AddEntity(new Entity(meshes[4], materials[5], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.1f, .1f, .1f))));

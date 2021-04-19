@@ -66,6 +66,8 @@ protected:
 
 	bool movingBackward;
 
+	bool isDrive;
+
 	// public methods
 public:
 	// transform info
