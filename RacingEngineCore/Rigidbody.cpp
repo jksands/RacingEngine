@@ -751,6 +751,8 @@ void Rigidbody::ResolveCollisions(float dt)
 		XMFLOAT3 me = GetCenterGlobal();
 		XMFLOAT3 you = collisionList[i]->GetCenterGlobal();
 		// check for ground collision
+
+
 		if (you.y < me.y) // you are beneath me
 		{
 			// colliding with ground
@@ -764,12 +766,85 @@ void Rigidbody::ResolveCollisions(float dt)
 		}
 		else
 		{
+			/*
 			// XMVector3Reflect
 			pos = AddFloat3(pos, MultFloat3(vel, -1));
 			myTransform->MoveRelative(-vel.x * dt, -vel.y * dt, -vel.z * dt);
 			vel = MultFloat3(vel, -.5f);
 			accel = MultFloat3(accel, -1);
 			tint = XMFLOAT4(1, 0, 0, 0);
+			*/
+
+			// get reference to the thing we are colliding with
+			Rigidbody* inc = collisionList[i];
+			XMFLOAT3 distVec = SubFloat3(you, me);
+
+			XMFLOAT3 incScale = inc->myTransform->GetScale();
+			// dividing by scale to treat like cube
+			distVec.x /= incScale.x/2.0f;
+			distVec.z /= incScale.z/2.0f;
+
+			// need this to reflect across later
+			XMVECTOR reflectNorm;
+
+			XMVECTOR tempVel = XMLoadFloat3(&vel);
+
+			// rotate the vel using car's world mat
+			XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+			XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+			tempVel = XMVector3Rotate(tempVel, rotQuat);
+
+			// left/right 
+			if (abs(distVec.x) > abs(distVec.z))
+			{
+				tempVel = -tempVel;
+				// to the right
+				if (distVec.x > 0)
+				{
+					// reflect norm is the right vector
+					reflectNorm = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); // DOES NOT WORK
+				}
+				// to the left
+				else
+				{
+					// reflect norm is the -right vector
+					reflectNorm = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); // DOES NOT WORK
+				}
+			}
+			// front or back
+			else if (abs(distVec.x) < abs(distVec.z))
+			{
+				// to the front
+				if (distVec.z > 0)
+				{
+					// reflect norm is the forward vector
+					// reflectNorm = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+					reflectNorm = XMVectorSet(-1.0f, 0.0f, 0.0f, 0.0f);
+				}
+				// to the back
+				else
+				{
+					// reflect norm is the -forward vector
+					reflectNorm = XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f);
+				}
+			}
+			// if they are the same, it hit the corner, just reverse vel
+			else
+			{
+				reflectNorm = XMVectorSet(-vel.x, 0.0f, -vel.z, 0.0f);
+			}
+
+			// relfecting it
+			tempVel = XMVector3Reflect(tempVel, reflectNorm);
+
+			// re storing the velocity
+			XMStoreFloat3(&vel, tempVel);
+
+			// i dont knoiw what this dose. Whoever wrote this is dumb
+			tint = XMFLOAT4(1, 0, 0, 0);
+
+			// moving it slightly away from the wall so it's not stuck inside
+			// myTransform->MoveRelative(vel.x * dt, vel.y * dt, vel.z * dt);
 		}
 	}
 }
