@@ -297,12 +297,12 @@ bool Rigidbody::IsColliding(Rigidbody* incoming)
 	if (MagFloat3(SubFloat3(GetCenterGlobal(), incoming->GetCenterGlobal())) <= radius + incoming->GetRadius())
 	{
 		isColliding = true;
-		isGrounded = true;
+		// isGrounded = true;
 	}
 	else
 	{
 		isColliding = false;
-		isGrounded = false;
+		// isGrounded = false;
 	}
 
 	// run SAT now
@@ -312,7 +312,7 @@ bool Rigidbody::IsColliding(Rigidbody* incoming)
 		// if (ARBBCheck(incoming) == false)
 		{
 			isColliding = false;
-			isGrounded = false;
+			// isGrounded = false;
 		}
 	}
 
@@ -669,14 +669,12 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 		ApplyGrav(grav);
 	}
 
-	AddToCollisionList(deltaTime);
-
 	// add accel to vel
 	vel = AddFloat3(vel, MultFloat3(accel, deltaTime));
 
 	// vel = MultFloat3(vel, deltaTime);
 
-	// only apply friction is we are pressing a key
+	// only apply friction is we are not pressing a key
 	if (!isDrive)
 	{
 		// apply friction
@@ -700,7 +698,19 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 
 	// add vel to pos
 	pos = AddFloat3(pos, MultFloat3(vel, deltaTime));
-	myTransform->MoveRelative(vel.x * deltaTime, vel.y * deltaTime, vel.z * deltaTime);
+	// Rotate velocity to global
+	XMVECTOR tVel = XMLoadFloat3(&vel);
+
+	// rotate the vel using car's world mat
+	XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+	XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+	tVel = XMVector3Rotate(tVel, rotQuat);
+	// Relative move
+	// myTransform->MoveRelative(vel.x * deltaTime, vel.y * deltaTime, vel.z * deltaTime);
+	XMFLOAT3 v;
+	XMStoreFloat3(&v, tVel);
+	// Global move
+	myTransform->MoveAbsolute(v.x * deltaTime, v.y * deltaTime, v.z * deltaTime);
 	XMFLOAT3 tempVel = vel;
 	if (MagFloat3(tempVel) == 0)
 	{
@@ -709,9 +719,9 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	}
 
 	// Get our rotation and make a quat out of it
-	XMFLOAT3 myR = myTransform->GetPitchYawRoll();
-	// NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
-	XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
+	//XMFLOAT3 myR = myTransform->GetPitchYawRoll();
+	//// NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
+	//XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
 	XMStoreFloat3(&tempVel, XMVector3Rotate(XMVector3Normalize(XMLoadFloat3(&tempVel)), rotQuat));
 
 
@@ -727,6 +737,8 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	// reset is drive
 	isDrive = false;
+	// Check collisions
+	AddToCollisionList(deltaTime);
 }
 void Rigidbody::AddToCollisionList(float dt)
 {
@@ -763,17 +775,13 @@ void Rigidbody::ResolveCollisions(float dt)
 			// accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
 			// tempFric = EntityManager::GetInstance()->GetRigidBodies()[1]->frictionCoeff;
 			tint = XMFLOAT4(1, 0, 0, 0);
+			// Set to be slightly above ground (will do a projected collision check later to check
+			// if should fall)
+			myTransform->MoveRelative(0, .1f, 0);
+			isGrounded = true;
 		}
 		else
 		{
-			/*
-			// XMVector3Reflect
-			pos = AddFloat3(pos, MultFloat3(vel, -1));
-			myTransform->MoveRelative(-vel.x * dt, -vel.y * dt, -vel.z * dt);
-			vel = MultFloat3(vel, -.5f);
-			accel = MultFloat3(accel, -1);
-			tint = XMFLOAT4(1, 0, 0, 0);
-			*/
 
 			// get reference to the thing we are colliding with
 			Rigidbody* inc = collisionList[i];
@@ -797,18 +805,19 @@ void Rigidbody::ResolveCollisions(float dt)
 			// left/right 
 			if (abs(distVec.x) > abs(distVec.z))
 			{
-				tempVel = -tempVel;
+				// tempVel = -tempVel;
 				// to the right
 				if (distVec.x > 0)
 				{
 					// reflect norm is the right vector
-					reflectNorm = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); // DOES NOT WORK
+					reflectNorm = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 				}
 				// to the left
 				else
 				{
 					// reflect norm is the -right vector
-					reflectNorm = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); // DOES NOT WORK
+					reflectNorm = XMVectorSet(-1.0f, 0.0f, 0.0f, 0.0f); // DOES NOT WORK
+					// reflectNorm = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 				}
 			}
 			// front or back
@@ -818,8 +827,8 @@ void Rigidbody::ResolveCollisions(float dt)
 				if (distVec.z > 0)
 				{
 					// reflect norm is the forward vector
-					// reflectNorm = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-					reflectNorm = XMVectorSet(-1.0f, 0.0f, 0.0f, 0.0f);
+					reflectNorm = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+					// reflectNorm = XMVectorSet(-1.0f, 0.0f, 0.0f, 0.0f);
 				}
 				// to the back
 				else
@@ -836,6 +845,11 @@ void Rigidbody::ResolveCollisions(float dt)
 
 			// relfecting it
 			tempVel = XMVector3Reflect(tempVel, reflectNorm);
+			// "un-rotate" the reflected velocity so it goes back to local space
+			rotQuat = XMQuaternionInverse(rotQuat);
+			tempVel = XMVector3Rotate(tempVel, rotQuat);
+			// myTransform->LookAt(XMLoadFloat3(&pos), tempVel);
+			// myTransform->SetPosition(pos.x + offset.x, pos.y + offset.y, pos.z + offset.z);
 
 			// re storing the velocity
 			XMStoreFloat3(&vel, tempVel);

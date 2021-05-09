@@ -380,11 +380,12 @@ void Game::OnResize()
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
-	cam->Update(deltaTime, this->hWnd);
 	for (int i = 0; i < entities.size(); i++)
 	{
 		entities[i]->Update(deltaTime, totalTime);
 	}
+	// Update camera last to prevent jittering
+	cam->Update(deltaTime, this->hWnd);
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();

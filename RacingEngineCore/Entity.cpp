@@ -47,7 +47,7 @@ void Entity::Update(float deltaTime, float totalTime)
 
 		XMFLOAT3 cPos = rb->GetCenterGlobal();
 		// The rigidbody has moved, so we move the mesh to follow it
-		transform.SetPosition(cPos.x + tPos.x, cPos.y+ tPos.y, cPos.z + tPos.z);
+		// transform.SetPosition(cPos.x + tPos.x, cPos.y+ tPos.y, cPos.z + tPos.z);
 	}
 }
 
