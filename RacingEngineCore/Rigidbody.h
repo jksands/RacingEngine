@@ -59,7 +59,7 @@ protected:
 	DirectX::XMFLOAT3 offset;
 
 	// Represents the vector offset to point the velocity to while STEERING
-	DirectX::XMFLOAT3 steeringOffset;
+	DirectX::XMFLOAT3 steeringOffset = DirectX::XMFLOAT3(0,0,0);
 
 	// this... thing?
 	const float EPSILON = 1.401298E-45;
