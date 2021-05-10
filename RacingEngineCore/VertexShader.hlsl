@@ -6,7 +6,9 @@ cbuffer externalData : register(b0)
     float4 tint;
 	matrix world;
 	matrix view;
-	matrix proj;
+    matrix proj;
+    matrix lightView;
+    matrix lightProj;
 };
 
 // Entry point
@@ -18,9 +20,12 @@ VertexToPixel main( VertexShaderInput input )
 	// I am NOT transposing the matrices, so multiplication order is reversed
 	// -- PVM instead of MVP
     matrix worldViewProj = mul(proj, mul(view, world));
+    matrix shadowWVP = mul(lightProj, mul(lightView, world));
 
 	// Apply MVP matrix to position
     output.position = mul(worldViewProj, float4(input.position, 1.0f));
+	// Calculate the shadow position
+    output.shPos = mul(shadowWVP, float4(input.position, 1.0f));
 
 	// Pass the color through 
 	output.color = tint;

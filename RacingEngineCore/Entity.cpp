@@ -85,6 +85,38 @@ void Entity::ResolveInputs(float deltaTime)
 }
 #pragma endregion
 
+void Entity::DrawShadow(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, SimpleVertexShader* vs, DirectionalLight light, DirectX::XMFLOAT4X4 lightView, DirectX::XMFLOAT4X4 lightProj)
+{
+	// will "back up" the light along its local axes
+	XMFLOAT3 pos = XMFLOAT3(-30 * light.direction.x, -30 * light.direction.y, -30 * light.direction.z);
+	vs->SetMatrix4x4("world", transform.GetWorldMatrix());
+	vs->SetMatrix4x4("view", lightView);
+	vs->SetMatrix4x4("proj", lightProj);
+	vs->CopyAllBufferData();
+
+	// Set buffers in the input assembler
+	//  - Do this ONCE PER OBJECT you're drawing, since each object might
+	//    have different geometry.
+	//  - for this demo, this step *could* simply be done once during Init(),
+	//    but I'm doing it here because it's often done multiple times per frame
+	//    in a larger application/game
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, mesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
+	context->IASetIndexBuffer(mesh->GetIndexBuffer().Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	// Finally do the actual drawing
+	//  - Do this ONCE PER OBJECT you intend to draw
+	//  - This will use all of the currently set DirectX "stuff" (shaders, buffers, etc)
+	//  - DrawIndexed() uses the currently set INDEX BUFFER to look up corresponding
+	//     vertices in the currently set VERTEX BUFFER
+	int temp = mesh->GetIndexCount();
+	context->DrawIndexed(
+		mesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
+		0,     // Offset to the first index we want to use
+		0);    // Offset to add to each index when looking up vertices
+
+}
 void Entity::Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char type)
 {
 

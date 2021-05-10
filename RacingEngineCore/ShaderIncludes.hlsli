@@ -32,9 +32,10 @@ struct VertexToPixel
 	//  |    |                |
 	//  v    v                v
     float4 position     : SV_POSITION; // XYZW position (System Value Position)
+	float4 shPos		: POSITION1;	// XYZW position (System Value Position)
     float4 color        : COLOR; // RGBA color
     float3 normal       : NORMAL; // Vertex normal
-    float3 worldPos     : POSITION; // world position
+    float3 worldPos     : POSITION0; // world position
     float2 uv           : TEXCOORD; // uv coords
 };
 
@@ -47,10 +48,11 @@ struct V2P_NormalMap
 	//  |    |                |
 	//  v    v                v
     float4 position     : SV_POSITION; // XYZW position (System Value Position)
+	float4 shPos		: POSITION1;	// XYZW position (System Value Position)
     float4 color        : COLOR; // RGBA color
     float3 normal       : NORMAL; // Vertex normal
     float3 tangent      : TANGENT;
-    float3 worldPos     : POSITION; // world position
+    float3 worldPos     : POSITION0; // world position
     float2 uv           : TEXCOORD; // uv coords
 };
 

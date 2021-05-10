@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "Material.h"
 #include "Rigidbody.h"
+#include "Lights.h"
 #include <d3dcompiler.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 class Entity
@@ -15,6 +16,7 @@ public:
 	Transform* GetTransform();
 	void Update(float deltaTime, float totalTime);
 	void ResolveInputs(float deltaTime);
+	void DrawShadow(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, SimpleVertexShader* vs, DirectionalLight light, DirectX::XMFLOAT4X4 lightView, DirectX::XMFLOAT4X4 lightProj);
 	// For time being, Entities handle their own Draw.  May be updated in the future with an addition of a renderer
 	void Draw(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, char c = ' ');
 	void DrawCollider(Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx, Camera* cam, Mesh* colliderMesh, SimpleVertexShader* vs, SimplePixelShader* ps);

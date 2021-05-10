@@ -4,6 +4,7 @@
 
 // For the DirectX Math library
 using namespace DirectX;
+#define ShadowSize 4096 * 4
 
 // --------------------------------------------------------
 // Constructor
@@ -68,6 +69,7 @@ Game::~Game()
 	delete barePS;
 	delete colorPS;
 	delete PBRPS;
+	delete shadowVS;
 	delete skyboxEntity;
 	delete debugEntity;
 	delete EntityManager::GetInstance();
@@ -85,6 +87,10 @@ void Game::Init()
 	rastDesc.CullMode = D3D11_CULL_FRONT;
 	rastDesc.DepthClipEnable = true;
 	device->CreateRasterizerState(&rastDesc, skyRasterState.GetAddressOf());
+	rastDesc.DepthBias = 1000;
+	rastDesc.DepthBiasClamp = 0.0f;
+	rastDesc.SlopeScaledDepthBias = 2.0f;
+	device->CreateRasterizerState(&rastDesc, shadowRasterState.GetAddressOf());
 
 	rastDesc.FillMode = D3D11_FILL_WIREFRAME;
 	rastDesc.CullMode = D3D11_CULL_NONE;
@@ -96,6 +102,34 @@ void Game::Init()
 	ds.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	ds.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	device->CreateDepthStencilState(&ds, &skyDepthState);
+
+	// SHADOW STUFF
+	// Texture:
+	D3D11_TEXTURE2D_DESC texDesc = {};
+	texDesc.ArraySize = 1;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.Width = ShadowSize;
+	texDesc.Height = ShadowSize;
+	texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	texDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+
+	device->CreateTexture2D(&texDesc, 0, &shadowTex);
+
+	// Depth buffer
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthDesc = {};
+	depthDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+
+	device->CreateDepthStencilView(shadowTex, &depthDesc, &shadowDepth);
+
+	// SRV
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.TextureCube.MipLevels = 1; // Only 1 mip
+	srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
+
+	device->CreateShaderResourceView(shadowTex, &srvDesc, &shadowSRV);
 
 	// create Skybox
 	skybox = CreateSkybox(
@@ -169,6 +203,9 @@ void Game::LoadShaders()
 
 	PBRPS = new SimplePixelShader(device, context);
 	PBRPS->LoadShaderFile(L"PBRPS.cso");
+
+	shadowVS = new SimpleVertexShader(device, context);
+	shadowVS->LoadShaderFile(L"ShadowVS.cso");
 }
 
 void Game::LoadTextures()
@@ -245,6 +282,18 @@ void Game::CreateSampler()
 	sDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	if (device->CreateSamplerState(&sDesc, &sampler) != S_OK) throw; // Simply breaks the program here to show a problem occurred
+
+	// Describe and create the base sampler
+	D3D11_SAMPLER_DESC shadowSampDesc = {};
+	shadowSampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	// shadowSampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	shadowSampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+	shadowSampDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
+	shadowSampDesc.MaxAnisotropy = 8;
+	shadowSampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	device->CreateSamplerState(&shadowSampDesc, shadowSamp.GetAddressOf());
 }
 
 // Creates a basic Material - will load in textures in the future
@@ -307,7 +356,14 @@ void Game::CreateLights()
 	mainLight = {};
 	mainLight.ambientColor = XMFLOAT3(.1f, .1f, .1f);
 	mainLight.diffuseColor = XMFLOAT3(1, 1, 1);	// White light
-	mainLight.direction = XMFLOAT3(-1, 0, 1);	// Facing same way as camera
+	mainLight.direction = XMFLOAT3(-1, -.2f, 1);	// Facing same way as camera
+
+	XMFLOAT3 t = XMFLOAT3(-20 * mainLight.direction.x, -20 * mainLight.direction.y, -20 * mainLight.direction.z);
+	XMMATRIX view = XMMatrixLookToLH(XMLoadFloat3(&t), XMLoadFloat3(&mainLight.direction), XMVectorSet(0, 1, 0, 0));
+	XMStoreFloat4x4(&shadowView, view);
+
+	// Calculate proj once
+	XMStoreFloat4x4(&shadowProj, XMMatrixOrthographicLH(1000, 1000, .01f, 1000));
 }
 
 Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateSkybox(
@@ -460,7 +516,65 @@ void Game::Draw(float deltaTime, float totalTime)
 	// DO THIS BETTER! This is in game draw, but the vs updates are all in entity draw.  MAKES NO SENSE
 	pixelShader->CopyAllBufferData();
 	normalMapPS->CopyAllBufferData();
-	
+
+	// PREPARE FOR SHADOW RENDERING ---
+	// clear shadow Depth Buffer
+	context->ClearDepthStencilView(
+		shadowDepth,
+		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+		1.0f,
+		0);
+	// Set null render target and depth stencil view
+	context->OMSetRenderTargets(0, nullptr, shadowDepth);
+
+	// SET SPECIAL RASTERIZER STATE
+	context->RSSetState(shadowRasterState.Get());
+
+	// Adjust viewport to match the texture
+	D3D11_VIEWPORT vp = {};
+	vp.Width = ShadowSize;  // Needs to match texture
+	vp.Height = ShadowSize; // Needs to match texture
+	vp.MaxDepth = 1.0f;
+	context->RSSetViewports(1, &vp);
+
+	// SET SPECIAL VERTEX SHADER
+	shadowVS->SetShader();
+	// SET NULL PIXEL SHADER
+	context->PSSetShader(0, 0, 0);
+	// RENDER
+	for (auto e : entities)
+	{
+		e->DrawShadow(context, shadowVS, mainLight, shadowView, shadowProj);
+	}
+
+	// PREPARE FOR NORMAL RENDERING ---
+	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
+	// reset viewport
+	vp = {};
+	vp.Width = (float)width;
+	vp.Height = (float)height;
+	vp.MaxDepth = 1.0f;
+	context->RSSetViewports(1, &vp);
+	context->RSSetState(0);
+
+	// NORMAL RENDER
+	// First, copy over light's view and proj
+	vertexShader->SetShader();
+	vertexShader->SetMatrix4x4("lightView", shadowView);
+	vertexShader->SetMatrix4x4("lightProj", shadowProj);
+	pixelShader->SetShader();
+	pixelShader->SetSamplerState("shadowSampler", shadowSamp.Get());
+	pixelShader->SetShaderResourceView("ShadowMap", shadowSRV.Get());
+	normalMapVS->SetShader();
+	normalMapVS->SetMatrix4x4("lightView", shadowView);
+	normalMapVS->SetMatrix4x4("lightProj", shadowProj);
+	normalMapPS->SetShader();
+	normalMapPS->SetSamplerState("shadowSampler", shadowSamp.Get());
+	normalMapPS->SetShaderResourceView("ShadowMap", shadowSRV.Get());
+	vertexShader->CopyAllBufferData();
+	pixelShader->CopyAllBufferData();
+	normalMapVS->CopyAllBufferData();
+	normalMapPS->CopyAllBufferData();
 	entities = EntityManager::GetInstance()->GetEntities();
 	// Draw all entities
 	for (int i = 0; i < entities.size(); i++)
@@ -480,7 +594,7 @@ void Game::Draw(float deltaTime, float totalTime)
 			// Draw cube collider by default.  Will add ability
 			// To draw different types of colliders based on
 			// data passed in
-			entities[i]->DrawCollider(context, cam, meshes[2], vertexShader, colorPS);
+			// entities[i]->DrawCollider(context, cam, meshes[2], vertexShader, colorPS);
 			// entities[i]->DrawDebugObject(context, cam, meshes[0], vertexShader, colorPS);
 			// entities[i]->DrawHandles(context, cam, meshes[meshes.size() - 1], vertexShader, colorPS);
 
@@ -499,6 +613,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 
 
+	ID3D11ShaderResourceView* pSRV[16] = {};
+	context->PSSetShaderResources(0, 16, pSRV);
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it

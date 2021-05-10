@@ -84,6 +84,24 @@ private:
 
 	SimplePixelShader* PBRPS;
 
+	// Shadow stuff
+	// Matrices 
+	DirectX::XMFLOAT4X4 shadowView;
+	DirectX::XMFLOAT4X4 shadowProj;
+	// Vertex shader
+	SimpleVertexShader* shadowVS;
+	// Sampler
+	Microsoft::WRL::ComPtr < ID3D11SamplerState> shadowSamp;
+
+	// Shadow raster state
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> shadowRasterState;
+	// Texture2D?
+	ID3D11Texture2D* shadowTex;
+	// Uses texture as "depth buffer"
+	ID3D11DepthStencilView* shadowDepth;
+	// SRV for passing to shaders
+	Microsoft::WRL::ComPtr < ID3D11ShaderResourceView> shadowSRV;
+
 	// Keeps track of the old mouse position.  Useful for 
 	// determining how far the mouse moved in a single frame.
 	POINT prevMousePos;
