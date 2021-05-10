@@ -736,11 +736,8 @@ void  Rigidbody::Update(float deltaTime, float totalTime)
 	// tempVel.x = -1;
 	// tempVel.z = -1;
 
-	// Get our rotation and make a quat out of it
-	//XMFLOAT3 myR = myTransform->GetPitchYawRoll();
-	//// NOTE: SHOULD REDUCE THIS TO ONLY HAPPEN WHEN DIRTY
-	//XMVECTOR rotQuat = XMQuaternionRotationRollPitchYaw(myR.x, myR.y, myR.z);
-	XMStoreFloat3(&tempVel, XMVector3Rotate(XMVector3Normalize(XMLoadFloat3(&tempVel)), rotQuat));
+	// Attempt to look at global velocity
+	// XMStoreFloat3(&tempVel, XMVector3Rotate(XMVector3Normalize(XMLoadFloat3(&tempVel)), rotQuat));
 	// myTransform->LookAt(XMLoadFloat3(&GetCenterGlobal()), XMLoadFloat3(&tempVel));
 
 
@@ -792,12 +789,11 @@ void Rigidbody::ResolveCollisions(float dt)
 			// THIS WORKS AND KEEPS CAR STILL
 			accel.y = 0.0f;
 			vel.y = 0.0f;
-			// vel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-			// accel = XMFLOAT3(0.0f, 0.0f, 0.0f);
-			// tempFric = EntityManager::GetInstance()->GetRigidBodies()[1]->frictionCoeff;
 			tint = XMFLOAT4(1, 0, 0, 0);
 			// Set to be slightly above ground (will do a projected collision check later to check
 			// if should fall)
+
+			// Set to be above ground
 			myTransform->MoveRelative(0, .1f, 0);
 			isGrounded = true;
 		}
@@ -816,6 +812,7 @@ void Rigidbody::ResolveCollisions(float dt)
 			// need this to reflect across later
 			XMVECTOR reflectNorm;
 
+			// Load in temporary velocity
 			XMVECTOR tempVel = XMLoadFloat3(&vel);
 
 			// rotate the vel using car's world mat
@@ -826,7 +823,6 @@ void Rigidbody::ResolveCollisions(float dt)
 			// left/right 
 			if (abs(distVec.x) > abs(distVec.z))
 			{
-				// tempVel = -tempVel;
 				// to the right
 				if (distVec.x > 0)
 				{

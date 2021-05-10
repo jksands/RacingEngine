@@ -103,5 +103,11 @@ private:
 	ID3D11ShaderResourceView* metal;
 	ID3D11ShaderResourceView* carTex;
 
+	ID3D11ShaderResourceView* wallTex;
+	ID3D11ShaderResourceView* wallNM;
+
+	ID3D11ShaderResourceView* roadText;
+	ID3D11ShaderResourceView* roadNM;
+
 };
 

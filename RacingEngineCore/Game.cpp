@@ -201,6 +201,37 @@ void Game::LoadTextures()
 		nullptr,
 		&carTex
 	);
+
+
+	CreateWICTextureFromFile(
+		device,
+		context,
+		L"../../Assets/Textures/moss.jpg",
+		nullptr,
+		&wallTex
+	);
+	CreateWICTextureFromFile(
+		device,
+		context,
+		L"../../Assets/Textures/moss_normals.jpg",
+		nullptr,
+		&wallNM
+	);
+
+	CreateWICTextureFromFile(
+		device,
+		context,
+		L"../../Assets/Textures/road.jpg",
+		nullptr,
+		&roadText
+	);
+	CreateWICTextureFromFile(
+		device,
+		context,
+		L"../../Assets/Textures/road_normals.jpg",
+		nullptr,
+		&roadNM
+	);
 }
 
 void Game::CreateSampler()
@@ -224,8 +255,10 @@ void Game::LoadMaterials()
 	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(1, 1, 1, 0), 1.0f, metal, sampler));
 	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f));
 	materials.push_back(new Material(colorPS, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f));
-	materials.push_back(new Material(barePS, bareVS, XMFLOAT4(1, 1, 1, 0), 0.1f));
+	materials.push_back(new Material(barePS, bareVS, XMFLOAT4(1, 1, 1, 0), 1.0f));
 	materials.push_back(new Material(pixelShader, vertexShader, XMFLOAT4(1, 1, 1, 0), 0.1f, carTex, sampler));
+	materials.push_back(new Material(normalMapPS, normalMapVS, XMFLOAT4(1, 1, 1, 0), 0.1f, wallTex, sampler, wallNM));
+	materials.push_back(new Material(normalMapPS, normalMapVS, XMFLOAT4(1, 1, 1, 0), 0.1f, roadText, sampler, roadNM));
 }
 
 // Loads a mesh from a file - Can create a mesh yourself should you desire
@@ -256,10 +289,10 @@ void Game::CreateEntities()
 	cam->FollowObject(XMFLOAT3(0, 1, -3));
 	
 	// floor
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[2], Transform(XMFLOAT3(-0.0f, -5.0f, -0.0f), XMFLOAT3(1000.0f, 2.0f, 1000.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[8], Transform(XMFLOAT3(-0.0f, -5.0f, -0.0f), XMFLOAT3(1000.0f, 2.0f, 1000.0f)), true, false));
 	// wall
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[2], Transform(XMFLOAT3(-50.0f, 5.0f, -0.0f), XMFLOAT3(10.0f, 25.0f, 100.0f)), true, false));
-	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[2], Transform(XMFLOAT3(-0.0f, 5.0f, 50.0f), XMFLOAT3(100.0f, 25.0f, 10.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[7], Transform(XMFLOAT3(-50.0f, 5.0f, -0.0f), XMFLOAT3(10.0f, 25.0f, 100.0f)), true, false));
+	EntityManager::GetInstance()->AddEntity(new Entity(meshes[2], materials[7], Transform(XMFLOAT3(-0.0f, 5.0f, 50.0f), XMFLOAT3(100.0f, 25.0f, 10.0f)), true, false));
 
 	// FBX model
 	// EntityManager::GetInstance()->AddEntity(new Entity(meshes[4], materials[5], Transform(XMFLOAT3(0, 0, 0), XMFLOAT3(.1f, .1f, .1f))));
@@ -274,7 +307,7 @@ void Game::CreateLights()
 	mainLight = {};
 	mainLight.ambientColor = XMFLOAT3(.1f, .1f, .1f);
 	mainLight.diffuseColor = XMFLOAT3(1, 1, 1);	// White light
-	mainLight.direction = XMFLOAT3(1, 0, 1);	// Facing same way as camera
+	mainLight.direction = XMFLOAT3(-1, 0, 1);	// Facing same way as camera
 }
 
 Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateSkybox(
